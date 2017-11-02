@@ -1,7 +1,7 @@
 from netCDF4 import Dataset
 import numpy as np
 from scipy.fftpack import fft, ifft
-from new_diffu_class import mw_diffu,dc
+from diffu_class import mw_diffu,dc
 import matplotlib.pyplot as plt
 from matplotlib import cm
 #print 'Multi-wavenumber theory for diffusivity\n'
