@@ -19,14 +19,13 @@ class mw_diffu:
     lon_m=None #lon for mask
     nx=None
     ny=None
-    nx_out=None
     nt=None
     nx_half=None
     T_len=None
     L_len=None
     def __init__(self,u_in,v_in,lon_in,lat_in):
-        self.u = u_in
-        self.v = v_in
+        self.u = np.flipud(u_in)
+        self.v = np.flipud(v_in)
         self.um = np.mean(u_in,0)
         self.vm = np.mean(v_in,0)
         self.lon=lon_in
@@ -41,7 +40,7 @@ class mw_diffu:
         self.vvSpectr=np.zeros([self.nx,self.ny,self.nx_half])
 
         self.L_len=a*np.cos(np.deg2rad(lat_in))*2*np.pi #unit: m
-        self.T_len=0.25*self.nt #unit:day
+        self.T_len=0.25*self.nt*seconds_in_a_day #unit:seconds
         for i in range(self.nx):
             if self.lon_m[i]>180.:
                 self.lon_m[i]-=360.
@@ -136,17 +135,19 @@ class mw_diffu:
         return
 
     def get_randel_held(self,mask_func):
-        cc=np.arange(1,40)*1.0
+        cc=np.arange(1,50)*1.0
         c_num=cc.shape[0]
         vMask=np.zeros([self.nx,self.nt])
         uMask=np.zeros([self.nx,self.nt])
         Spectr_yc=np.zeros([self.nx,self.ny,c_num])
+        Spectr_yc2=np.zeros([self.nx,self.ny,c_num])
+        ### Spectr_yc: uv, Spectr_yc2:vv
         u_mn=np.zeros([self.nx,self.ny])
 
-        #for y in range(self.ny):
-        for y in range(ylev,ylev+1):
+        for y in range(self.ny):
+        #for y in range(ylev,ylev+1):
             #for x in range(self.nx):
-            print 'y=',y
+            #print 'y=',y
             for x in range(100,101):
                 #==== calculate local average U ====
                 u_mn[x,y]=self.localU(x,y,mask_func)
@@ -155,19 +156,21 @@ class mw_diffu:
                     for xx in range(self.nx):
                         vMask[x+xx-self.nx,t]=self.va[t,y,x+xx-self.nx]*mask_func[xx]
                         uMask[x+xx-self.nx,t]=self.ua[t,y,x+xx-self.nx]*mask_func[xx]
+                #vSpectr2=fft2(vMask)/(self.nx*self.nt)
+                #uSpectr2=fft2(uMask)/(self.nx*self.nt)
                 vSpectr2=fft2(vMask)
                 uSpectr2=fft2(uMask)
                 #uvSpectr2=fft2(uMask*vMask)
                 for n,c in enumerate(cc):
-                    #extr=self.extractC_wt(np.real(uSpectr2*vSpectr2),c,y)
+                    extr=self.extractC_wt(np.real(uSpectr2*np.conj(vSpectr2)),c,y)
                     #extr[12:]=0
-                    #Spectr_yc[x,y,n]=np.sum(extr,0)
-                    Spectr_yc[x,y,n]=np.sum(self.extractC_wt(abs(vSpectr2)**2,c,y),0)
+                    Spectr_yc[x,y,n]=np.sum(extr,0)/self.nx
+                    Spectr_yc2[x,y,n]=np.sum(self.extractC_wt(abs(vSpectr2)**2,c,y),0)/self.nx
                     #for k in range(self.nx_half):
                         #Spectr_yc[x,y,n]+=self.
         
                 #self.vvSpectr[x,y,:]=abs(self.extractC(vSpectr2,U,y))**2
-        return Spectr_yc,u_mn,abs(vSpectr2)**2,vMask,uMask
+        return Spectr_yc,Spectr_yc2,u_mn
 
     def frequency(self):
         freq=np.zeros(self.nt/2)
@@ -182,9 +185,9 @@ class mw_diffu:
         return wn
 
     def uk2f(self,u,k,j):
-        u_tmp=abs(u)*seconds_in_a_day
-    #    k_star=k*2*np.pi/self.L_len[j]
-        f=k*self.T_len/self.L_len[j]*u_tmp
+        #u_tmp=abs(u)*seconds_in_a_day
+        #f=k*self.T_len/self.L_len[j]*u_tmp
+        f=k*self.T_len/self.L_len[j]*abs(u)
         return f
                 
 
@@ -194,30 +197,10 @@ class mw_diffu:
     @staticmethod
     def testFFT(series):
         return fft(series)
-    @staticmethod
-    def Heaviside(x):
-        if x>=0:
-            return 1.
-        else:
-            return 0.
-
-    @staticmethod
-    def lon_diff(lon1,lon2):
-        result= np.angle(np.exp(1.0j*np.deg2rad(lon1-lon2)),deg=True)
-        return result
-
-    def Gauss(self,lon0,lon_len):
-        #func= np.exp(-(self.lon-lon0)**2/(2*lon_len**2))
-        return np.exp(-self.lon_diff(self.lon,lon0)**2/(2*lon_len**2))
-
-    def Rect(self,lon0,lon_len):
-        return np.heaviside(np.abs(self.lon_diff(self.lon,lon0))/(lon_len)-1.,1.)
-
-    
-
      
-    def genMaskRect(self,lon_out,lon_len):
+    def genMaskRect(self,fold):
         # lon_len is half length
+        xl=int((self.nx/fold-1)/2)
         maskFunc = np.zeros(self.nx)
         maskFunc[0] = 1.
         for i in range(xl+1):
@@ -227,10 +210,8 @@ class mw_diffu:
 
     def genMaskGauss(self,sig_lon):
         maskFunc = np.zeros(self.nx)
-        maskFunc = np.exp(-(self.lon_m**2)/sig_lon**2)
+        maskFunc = np.exp(-(self.lon_m**2)/(2*sig_lon**2))
         return maskFunc
-
-
         
 
 
