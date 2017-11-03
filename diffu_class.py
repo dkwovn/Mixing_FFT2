@@ -19,6 +19,8 @@ class mw_diffu:
     vvSpectr=None
     lon=None
     lat=None
+    lon_r=None
+    lat_r=None
     lon_m=None #lon for mask
     ff=None
     kk=None
@@ -34,6 +36,8 @@ class mw_diffu:
         self.vm = np.mean(v_in,0)
         self.lon=lon_in
         self.lat=lat_in
+        self.lon_r=np.deg2rad(self.lon)
+        self.lat_r=np.deg2rad(self.lat)
         self.nx=lon_in.shape[0]
         self.ny=lat_in.shape[0]
         self.nt=u_in.shape[0]
@@ -142,25 +146,41 @@ class mw_diffu:
 
         return extr
 
+    def extractC_wt2(self,spectr,c,j):
+        extr=np.zeros(self.nx)
+        for k in range(self.nx):
+            try:
+                f=self.uk2f(c,self.kk[k],j)
+            except:
+                print self.kk
+            extr[k]=np.sum(self.Gauss(self.ff,f,dw)*spectr[k,:]*(self.T_len/(2*np.pi)),0)/max(sum(self.Gauss(self.ff,f,dw)),1.)
+        return extr
+
     def get_diffu(self,mask_func):
         vMask=np.zeros([self.nx,self.nt])
-        #for y in range(self.ny):
-        for y in range(85,86):
+        u_mn=np.zeros([self.nx,self.ny])
+        diffu_spectr=np.zeros([self.ny,self.nx,self.nx])
+
+        for y in range(self.ny):
+            #print 'y=',y
+        #for y in range(85,86):
             #for x in range(self.nx):
             for x in range(100,101):
                 #==== calculate local average U ====
                 #==== replace this U with eddy phase speed sampling, one gets Randel and Held (1991) type calculation ====
-        #        U=self.localU(x,y,mask_func)
-                U=15.
+                #U=self.localU(x,y,mask_func)
+                u_mn[x,y]=self.localU(x,y,mask_func)
+    #            U=15.
                 for t in range(self.nt):
                     #=== apply mask ===
                     for xx in range(self.nx):
                         vMask[x+xx-self.nx,t]=self.va[t,y,x+xx-self.nx]*mask_func[xx]
-                vSpectr2=fft2(vMask)
-                self.vvSpectr[x,y,:]=self.extractC(abs(vSpectr2),U,y)**2
+                vSpectr2=fft2(vMask)/(self.nx*self.nt)
+                diffu_spectr[y,x,:]=self.extractC_wt2(abs(vSpectr2)**2,u_mn[x,y],y)
+                #print np.sum(diffu_spectr[y,x,:],0)
                 #self.vvSpectr[x,y,:]=abs(self.extractC(vSpectr2,U,y))**2
 
-        return
+        return diffu_spectr,u_mn
 
     def get_randel_held(self,mask_func):
         cc=np.arange(-50,50,dc)*1.0
@@ -184,10 +204,10 @@ class mw_diffu:
                     for xx in range(self.nx):
                         vMask[x+xx-self.nx,t]=self.va[t,y,x+xx-self.nx]*mask_func[xx]
                         uMask[x+xx-self.nx,t]=self.ua[t,y,x+xx-self.nx]*mask_func[xx]
-                #vSpectr2=fft2(vMask)/(self.nx*self.nt)
-                #uSpectr2=fft2(uMask)/(self.nx*self.nt)
-                vSpectr2=fft2(vMask)
-                uSpectr2=fft2(uMask)
+                vSpectr2=fft2(vMask)/(self.nx*self.nt)
+                uSpectr2=fft2(uMask)/(self.nx*self.nt)
+                #vSpectr2=fft2(vMask)
+                #uSpectr2=fft2(uMask)
                 #uvSpectr2=fft2(uMask*vMask)
                 for n,c in enumerate(cc):
                     extr=self.extractC_wt(np.real(uSpectr2*np.conj(vSpectr2)),c,y)
