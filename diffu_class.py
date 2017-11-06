@@ -6,6 +6,7 @@ from scipy.fftpack import fft, ifft, fft2
 a=6.378e6
 seconds_in_a_day = 86400
 ylev=37
+xlev=100
 dw=2.0
 dc=2
 
@@ -95,7 +96,7 @@ class mw_diffu:
         vMask=np.zeros(self.nx)
         for t in range(1):
             for y in range(50,51):
-                for x in range(100,101):
+                for x in range(xlev,xlev+1):
                     #=== apply mask ===
                     for xx in range(self.nx):
                         vMask[x+xx-self.nx]=self.va[t,y,x+xx-self.nx]*mask_func[xx]
@@ -104,7 +105,7 @@ class mw_diffu:
     def test_diffu(self,mask_func):
         vMask=np.zeros([self.nx,self.nt])
         for y in range(ylev,ylev+1):
-            for x in range(100,101):
+            for x in range(xlev,xlev+1):
                 for t in range(self.nt):
                     #=== apply mask ===
                     for xx in range(self.nx):
@@ -164,8 +165,8 @@ class mw_diffu:
         for y in range(self.ny):
             #print 'y=',y
         #for y in range(85,86):
-            #for x in range(self.nx):
-            for x in range(100,101):
+            for x in range(self.nx):
+            #for x in range(xlev,xlev+1):
                 #==== calculate local average U ====
                 #==== replace this U with eddy phase speed sampling, one gets Randel and Held (1991) type calculation ====
                 #U=self.localU(x,y,mask_func)
@@ -196,7 +197,7 @@ class mw_diffu:
         #for y in range(ylev,ylev+1):
             #for x in range(self.nx):
             print 'y=',y
-            for x in range(100,101):
+            for x in range(xlev,xlev+1):
                 #==== calculate local average U ====
                 u_mn[x,y]=self.localU(x,y,mask_func)
                 for t in range(self.nt):
