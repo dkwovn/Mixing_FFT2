@@ -10,11 +10,13 @@ from matplotlib import cm
 PROCESS_FLAG=True
 #PROCESS_FLAG=False
 
-yr_st=1983
-yr_end=2016
+yr_st=1980
+yr_end=1985
 fold_num=16
 #zlev=3
+zz=3
 ylev=37
+xlev=100
 
 def get_spectr():
     yr_num=0
@@ -34,6 +36,7 @@ def get_spectr():
         nx=lon.shape[0]
         ny=lat.shape[0]
         nz=lev.shape[0]
+        print lon[xlev]
         #==== simple waves ====
 #        simple_v=np.zeros(uwnd[:,zlev,:,:].shape)
 #        k0=6
@@ -48,16 +51,17 @@ def get_spectr():
         if yr_num==0: 
             diffu_spectr=np.zeros([nz,ny,nx,nx])
             u_mn=np.zeros([nx,ny,nz])
-        for zlev in range(nz):
+        for zlev in range(zz,zz+1):
+        #for zlev in range(nz):
             print  'z=',zlev
             flow = mw_diffu(uwnd[:,zlev,:,:],vwnd[:,zlev,:,:],lon,lat)
-            maskFunc=flow.genMaskRect(1)
-            maskFunc[:]=1.
+            maskFunc=flow.genMaskGauss(20.)
+            #maskFunc[:]=1.
 
             if yr_num==0:
                 diffu_spectr[zlev,:,:,:],u_mn[:,:,zlev]=flow.get_diffu(maskFunc)
             else:
-                tmp1,tmp2=flow.get_randel_held(maskFunc)
+                tmp1,tmp2=flow.get_diffu(maskFunc)
                 diffu_spectr[zlev,:,:,:]+=tmp1
                 u_mn[:,:,zlev]+=tmp2
         yr_num+=1
@@ -69,7 +73,7 @@ def get_spectr():
 
 #===== main program =====
     
-data_fname='diffu350K_clim.npz'
+data_fname='npz/diffu350K_20_'+str(yr_st)+'_'+str(yr_end)+'.npz'
 if PROCESS_FLAG:
     lon,lat,lev,diffu_spectr,u_mn=get_spectr()
     np.savez(data_fname,lon=lon,lat=lat,lev=lev,diffu_spectr=diffu_spectr,u_mn=u_mn)
@@ -86,21 +90,25 @@ nt=360
 fig,axes=plt.subplots(1,1,figsize=[8,5])
 
 #=== plot randel_held type uv diagram ===
-#cc=np.arange(-50,50,dc)*1.0
-grid_x,grid_y=np.meshgrid(lat,lev)
-plt_fld=diffu_spectr[:,:,100]
-levs=[0.1,0.2,0.4,0.8,1.6,3.2,6.4,12.8,25.6,51.2]
-cs=axes.contourf(grid_x,grid_y,plt_fld/1e5,levels=levs,cmap=cm.Oranges,norm=colors.LogNorm(vmin=levs[0],vmax=levs[-1]))
-axes.contour(grid_x,grid_y,u_mn[100,:,:].T,colors='k')
+#grid_x,grid_y=np.meshgrid(lat,lev)
+#plt_fld=diffu_spectr[:,:,xlev]
+#levs=[0.1,0.2,0.4,0.8,1.6,3.2,6.4,12.8,25.6,51.2]
+#cs=axes.contourf(grid_x,grid_y,np.log(plt_fld)/np.log(10.),cmap=cm.Oranges,levels=np.arange(4,7,0.2))
+##axes.contour(grid_x,grid_y,u_mn[xlev,:,:].T,colors='k')
+#ax=fig.add_axes([0.16,0.05,0.7,0.01])
+#cb0=plt.colorbar(cs,cax=ax,orientation='horizontal')
+#axes.set_title("Zonal mean diffusivity")
+#axes.set_xticks(np.arange(-80,80.1,20.))
+
+#=== plot lon lat plot ===
+grid_x,grid_y=np.meshgrid(lon,lat)
+plt_fld=diffu_spectr[zz,:,:]
+cs=axes.contourf(grid_x,grid_y,np.log(plt_fld)/np.log(10.),cmap=cm.Oranges)
+axes.contour(grid_x,grid_y,u_mn[:,:,zz].T,colors='k')
 ax=fig.add_axes([0.16,0.05,0.7,0.01])
 cb0=plt.colorbar(cs,cax=ax,orientation='horizontal')
-#axes[0].plot(lat,plt_fld)
-#axes[1].plot(lat,u_mn[100,:])
-#axes[0].plot(lat,u_mn[100,:])
-#cs=axes[0,0].contourf(grid_x,grid_y,plt_fld,cmap=cm.RdBu_r,levels=np.arange(-1,1.1,0.2))
 
-
-#plt.savefig("/home/cliu/Documents/RESEARCH/2017/DIFFUSIVITY/FIGURES/11_2017/rh91_350K.pdf",format='pdf')
+#plt.savefig("/home/cliu/Documents/RESEARCH/2017/DIFFUSIVITY/FIGURES/11_2017/diffu_zm.pdf",format='pdf')
 plt.show()
 
 
