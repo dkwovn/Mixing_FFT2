@@ -6,7 +6,7 @@ from scipy.fftpack import fft, ifft, fft2
 a=6.378e6
 seconds_in_a_day = 86400
 ylev=37
-xlev=100
+xlev=0
 dw=2.0
 dc=2
 
@@ -157,7 +157,8 @@ class mw_diffu:
             extr[k]=np.sum(self.Gauss(self.ff,f,dw)*spectr[k,:]*(self.T_len/(2*np.pi)),0)/max(sum(self.Gauss(self.ff,f,dw)),1.)
         return extr
 
-    def get_diffu(self,mask_func):
+    #def get_diffu(self,mask_func):
+    def get_diffu(self,mask_func,option='lonRes'):
         vMask=np.zeros([self.nx,self.nt])
         u_mn=np.zeros([self.nx,self.ny])
         diffu_spectr=np.zeros([self.ny,self.nx,self.nx])
@@ -165,21 +166,20 @@ class mw_diffu:
         for y in range(self.ny):
             #print 'y=',y
         #for y in range(85,86):
-            for x in range(self.nx):
-            #for x in range(xlev,xlev+1):
+            if option=='zm':
+                x_list=range(xlev,xlev+1)
+            elif option=='lonRes':
+                x_list=range(self.nx)
+            for x in x_list:
                 #==== calculate local average U ====
-                #==== replace this U with eddy phase speed sampling, one gets Randel and Held (1991) type calculation ====
                 #U=self.localU(x,y,mask_func)
                 u_mn[x,y]=self.localU(x,y,mask_func)
-    #            U=15.
                 for t in range(self.nt):
                     #=== apply mask ===
                     for xx in range(self.nx):
                         vMask[x+xx-self.nx,t]=self.va[t,y,x+xx-self.nx]*mask_func[xx]
                 vSpectr2=fft2(vMask)/(self.nx*self.nt)
                 diffu_spectr[y,x,:]=self.extractC_wt2(abs(vSpectr2)**2,u_mn[x,y],y)
-                #print np.sum(diffu_spectr[y,x,:],0)
-                #self.vvSpectr[x,y,:]=abs(self.extractC(vSpectr2,U,y))**2
 
         return diffu_spectr,u_mn
 
