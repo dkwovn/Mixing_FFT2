@@ -33,6 +33,12 @@ class mw_diffu:
     def __init__(self,u_in,v_in,lon_in,lat_in):
         self.u = np.flipud(u_in)
         self.v = np.flipud(v_in)
+        #=== nan out ===
+        idx=np.where(abs(self.u)>1e9)
+        self.u[idx]=np.nan
+        idx=np.where(abs(self.v)>1e9)
+        self.v[idx]=np.nan
+        #===============
         self.um = np.mean(u_in,0)
         self.vm = np.mean(v_in,0)
         self.lon=lon_in
@@ -162,6 +168,7 @@ class mw_diffu:
         vMask=np.zeros([self.nx,self.nt])
         u_mn=np.zeros([self.nx,self.ny])
         diffu_spectr=np.zeros([self.ny,self.nx,self.nx])
+        u_zm=np.mean(u_mn,0)
 
         for y in range(self.ny):
             #print 'y=',y
