@@ -1,11 +1,15 @@
 #use gaussian weighting to get the spectra along a phase speed line 
 #keep the spectra matrix the same shape as data matrix
+#use cross correlation to get local diffusivity
+
+#Attention: stopped using flipping dimension for diffu_spectr, use ff=-ff, haven't tested yet
 import numpy as np
+from numpy import exp,log,deg2rad
 from scipy.fftpack import fft, ifft, fft2
 
 a=6.378e6
 seconds_in_a_day = 86400
-ylev=37
+ylev=105
 xlev=0
 dw=2.0
 dc=2
@@ -30,9 +34,12 @@ class mw_diffu:
     nt=None
     T_len=None
     L_len=None
+    deltaT=None
     def __init__(self,u_in,v_in,lon_in,lat_in):
-        self.u = np.flipud(u_in)
-        self.v = np.flipud(v_in)
+        #self.u = np.flipud(u_in)
+        #self.v = np.flipud(v_in)
+        self.u = u_in
+        self.v = v_in
         #=== nan out ===
         idx=np.where(abs(self.u)>1e9)
         self.u[idx]=np.nan
@@ -55,6 +62,7 @@ class mw_diffu:
 
         self.L_len=a*np.cos(np.deg2rad(lat_in))*2*np.pi #unit: m
         self.T_len=0.25*self.nt*seconds_in_a_day #unit:seconds
+        self.deltaT=self.T_len/self.nt
         for i in range(self.nx):
             if self.lon_m[i]>180.:
                 self.lon_m[i]-=360.
@@ -62,10 +70,10 @@ class mw_diffu:
             self.va[t,:,:] = self.v[t,:,:] - self.vm
             self.ua[t,:,:] = self.u[t,:,:] - self.um
         if u_in.shape!=v_in.shape:
-            print 'ERROR: shape dismatch!'
+            print( 'ERROR: shape dismatch!')
         if u_in.ndim!=3 or v_in.ndim!=3:
-            print 'ERROR: input dimension must be 3!'
-            print 'The shape should be (time,lat,lon)'
+            print( 'ERROR: input dimension must be 3!')
+            print( 'The shape should be (time,lat,lon)')
         #=== get ff,kk ===
         self.kk=np.zeros(self.nx)
         self.ff=np.zeros(self.nt)
@@ -81,6 +89,8 @@ class mw_diffu:
                 self.ff[j]=j
             else:
                 self.ff[j]=j-self.nt
+        #=== have not tested it yet ===
+        self.ff=-1*self.ff
 
     def get_uv_xt(self):
         result=np.zeros(self.ny)
@@ -146,7 +156,7 @@ class mw_diffu:
             try:
                 f=self.uk2f(c,self.kk[k],j)
             except:
-                print self.kk
+                print( self.kk)
             #extr[k]=np.interp(f,ff,spectr[k,:],left=0,right=0)*(k/(a*np.cos(np.deg2rad(self.lat[j]))))
             #extr[k]=sum(self.Gauss(self.ff,f,dw)*spectr[k,:]*(self.T_len/(2*np.pi)*k/(a*np.cos(np.deg2rad(self.lat[j])))),0)/(np.pi*2*dw**2)**0.5
             extr[k]=sum(self.Gauss(self.ff,f,dw)*spectr[k,:]*(self.T_len/self.L_len[j]*abs(self.kk[k])),0)/max(sum(self.Gauss(self.ff,f,dw)),1.)
@@ -159,12 +169,12 @@ class mw_diffu:
             try:
                 f=self.uk2f(c,self.kk[k],j)
             except:
-                print self.kk
+                print( self.kk)
             extr[k]=np.sum(self.Gauss(self.ff,f,dw)*spectr[k,:]*(self.T_len/(2*np.pi)),0)/max(sum(self.Gauss(self.ff,f,dw)),1.)
         return extr
 
     #def get_diffu(self,mask_func):
-    def get_diffu(self,mask_func,option='lonRes'):
+    def get_diffu_spectr(self,mask_func,option='lonRes'):
         vMask=np.zeros([self.nx,self.nt])
         u_mn=np.zeros([self.nx,self.ny])
         diffu_spectr=np.zeros([self.ny,self.nx,self.nx])
@@ -190,6 +200,99 @@ class mw_diffu:
 
         return diffu_spectr,u_mn
 
+    def get_diffu_grid(self,tLag):
+        diffu_grid=np.zeros([self.ny,self.nx,self.nt-2*tLag])
+        for x in range(self.nx):
+        #for x in range(xlev,xlev+1):
+            print(x)
+            for y in range(self.ny):
+                for t in range(tLag,self.nt-tLag):
+                    diffu_grid[y,x,t-tLag]=np.sum(self.va[t,y,x]*self.collectVal(x,y,t,tLag))*self.deltaT
+        print(diffu_grid.shape)
+        return diffu_grid
+        
+    def get_diffu_grid2(self,tLag):
+        diffu_grid=np.zeros([self.ny,self.nx,self.nt-2*tLag,2*tLag+1])
+        #for x in range(self.nx):
+        for x in range(xlev,xlev+1):
+            print(x)
+            #for y in range(self.ny):
+            for y in range(ylev,ylev+1):
+                for t in range(tLag,self.nt-tLag):
+                    diffu_grid[y,x,t-tLag,:]=self.va[t,y,x]*self.collectVal(x,y,t,tLag)*self.deltaT
+        return np.mean(diffu_grid,2)
+
+#    def get_diffu_grid3(self,tLag):
+
+    def nextLon(self,lon,y,t,option='b'):
+        #x can be a real number#
+        if option=='b':
+            fb=-1
+        elif option=='f':
+            fb=1
+        else:
+            print('Wrong option for nextLon')
+            quit()
+        return lon+fb*self.m2deg_x(self.interpVal(lon,y,t,'um')*self.deltaT,y)
+
+    def nextLon_u0(self,lon,u0,y,option='b'):
+        #x can be a real number#
+        if option=='b':
+            fb=-1
+        elif option=='f':
+            fb=1
+        else:
+            print('Wrong option for nextLon')
+            quit()
+        return lon+fb*self.m2deg_x(u0*self.deltaT,y)
+
+    def m2deg_x(self,m,y):
+        return m/self.L_len[y]*360.
+
+
+
+    def interpVal(self,lon,y,t,var='va'):
+        if var=='va':
+            var_arr=self.va[t,y,:]
+            #result= np.interp(lon,self.lon,self.va[t,y,:],period=360.)
+        elif var=='ua':
+            var_arr=self.ua[t,y,:]
+            #result= np.interp(lon,self.lon,self.ua[t,y,:],period=360.)
+        elif var=='um':
+            var_arr=self.um[y,:]
+            #result= np.interp(lon,self.lon,self.um[y,:],period=360.)
+        elif var=='lon':
+            var_arr=self.lon
+            #result= np.interp(lon,self.lon,self.lon[:],period=360.)
+        else:
+            print("Wrong parameter for var!")
+            quit()
+
+        result= np.interp(lon,self.lon,var_arr,period=360.)
+
+        return result
+
+    def collectVal(self,x,y,t,tLag,var='va'):
+        result=np.zeros(1+2*tLag)
+        result[tLag]=self.interpVal(self.lon[x],y,t,var)
+        lon_prev=self.lon[x]
+        for tt in range(tLag):
+         #   lon_next=self.nextLon(lon_prev,y,t-tt)
+            lon_next=self.nextLon_u0(lon_prev,self.um[y,x],y)
+            result[tLag-(tt+1)]=self.interpVal(lon_next,y,t-tt-1,var)
+            lon_prev=lon_next
+
+        lon_prev=self.lon[x]
+        for tt in range(tLag):
+            #lon_next=self.nextLon(lon_prev,y,t+tt,'f')
+            lon_next=self.nextLon_u0(lon_prev,self.um[y,x],y,'f')
+            result[tLag+(tt+1)]=self.interpVal(lon_next,y,t+tt+1,var)
+            lon_prev=lon_next
+
+        return result #return a time series based on U_mean
+
+
+
     def get_randel_held(self,mask_func):
         cc=np.arange(-50,50,dc)*1.0
         c_num=cc.shape[0]
@@ -203,7 +306,7 @@ class mw_diffu:
         for y in range(self.ny):
         #for y in range(ylev,ylev+1):
             #for x in range(self.nx):
-            print 'y=',y
+            print( 'y=',y)
             for x in range(xlev,xlev+1):
                 #==== calculate local average U ====
                 u_mn[x,y]=self.localU(x,y,mask_func)
@@ -255,6 +358,7 @@ class mw_diffu:
     @staticmethod
     def Gauss(xx,x0,dx):
         return np.exp(-(xx-x0)**2/(2*dx**2))
+
      
     def genMaskRect(self,fold):
         # lon_len is half length
