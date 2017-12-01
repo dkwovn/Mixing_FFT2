@@ -21,7 +21,7 @@ fold_num=16
 zz=3
 ylev=37
 xlev=0
-mask_sig=120.
+mask_sig=10.
 tLag=120
 
 def get_spectr(yr):
@@ -74,7 +74,7 @@ def get_spectr(yr):
 #===== main program =====
     
 #data_fname='/home/cjliu/data/npz/Diffu350K_DJF_'+str(int(mask_sig))+'_'+str(yr_st)+'_'+str(yr_end)+'.npz'
-data_fname='/home/cjliu/data/npz/DiffuGrid350K_DJF_'+str(int(tLag))+'_'+str(yr_st)+'_'+str(yr_end)+'.npz'
+data_fname='/home/cjliu/data/npz/DiffuGrid350K_U0_DJF_'+str(int(tLag))+'_'+str(yr_st)+'_'+str(yr_end)+'.npz'
 if PROCESS_FLAG:
 #    yr_num=0
 #    for yr in range(yr_st,yr_end+1):
@@ -170,15 +170,14 @@ grid_x,grid_y=plt_map(lon_fld,lat_fld)
 #plt_map.drawparallels(np.arange(-90,90,10),labels=[1,0,0,0],linewidth=0)
 #plt_map.drawmeridians(np.arange(0,360,30),labels=[0,0,0,1],linewidth=0)
 #plt_map.drawparallels(np.arange(-90,90,10),linewidth=0)
-#cs=plt_map.contourf(grid_x,grid_y,plt_fld/1e5,cmap=cm.rainbow,levels=[-200,0,50,100,150,200,250,300,350])
-cs=plt_map.contourf(grid_x,grid_y,plt_fld/1e5,cmap=cm.rainbow,levels=np.arange(-100,650.1,100))
+cs=plt_map.contourf(grid_x,grid_y,plt_fld/1e5,cmap=cm.rainbow,levels=np.arange(-50,350.1,50))
 plt_map.contour(grid_x,grid_y,u_mn_plt,colors='k',levels=np.arange(10,60.1,10))
 #plt_map.contour(grid_x,grid_y,grid_x,colors='k')
 ax=fig.add_axes([0.16,0.05,0.7,0.01])
 cb0=plt.colorbar(cs,cax=ax,orientation='horizontal')
 axes.set_title("350K "+str(yr_st)+'-'+str(yr_end)+" tLag="+str(tLag))
 
-plt.savefig("/home/cjliu/Documents/RESEARCH/2017/DIFFUSIVITY/FIGURES/11_2017/diffu_local_lag"+str(tLag)+"_"+str(yr_st)+"_"+str(yr_end)+".pdf",format='pdf')
+plt.savefig("/home/cjliu/Documents/RESEARCH/2017/DIFFUSIVITY/FIGURES/11_2017/diffu_local_fixU_lag"+str(tLag)+"_"+str(yr_st)+"_"+str(yr_end)+".pdf",format='pdf')
 plt.show()
 
 

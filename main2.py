@@ -9,7 +9,7 @@ import multiprocessing as mp
 #print 'Multi-wavenumber theory for diffusivity\n'
 
 PROCESS_FLAG=True
-PROCESS_FLAG=False
+#PROCESS_FLAG=False
 
 npro=16
 yr_st=1980
@@ -98,7 +98,7 @@ def get_spectr(yr):
 
 #===== main program =====
     
-data_fname='npz/zmDiffu_DJF_'+str(yr_st)+'_'+str(yr_end)+'.npz'
+data_fname='/home/cjliu/data/npz/zmDiffu_DJF_'+str(yr_st)+'_'+str(yr_end)+'.npz'
 if PROCESS_FLAG:
 #    yr_num=0
 #    for yr in range(yr_st,yr_end+1):

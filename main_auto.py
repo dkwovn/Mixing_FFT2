@@ -11,18 +11,19 @@ from mpl_toolkits.basemap import Basemap
 
 
 PROCESS_FLAG=True
-PROCESS_FLAG=False
+#PROCESS_FLAG=False
 
 npro=16
 yr_st=1980
 yr_end=1995
-fold_num=16
+fold_num=1
 #zlev=3
 zz=3
-ylev=37
-xlev=0
+#ylev=37
+#xlev=0
 mask_sig=120.
-tLag=120
+tLag=60
+lonWidth=15.
 
 def get_spectr(yr):
     #yr_num=0
@@ -65,7 +66,8 @@ def get_spectr(yr):
         print(  'z=',zlev)
         flow = mw_diffu(uwnd[:,zlev,:,:],vwnd[:,zlev,:,:],lon,lat)
 
-        diffu_grid[zlev,:,:] =np.mean(flow.get_diffu_grid(tLag),2)
+    #    diffu_grid[zlev,:,:] =np.mean(flow.get_diffu_grid(tLag),2)
+        diffu_grid[zlev,:,:] =flow.get_diffu_grid3(tLag,lonWidth)
         u_mn[:,:,zlev]=flow.um.T
 
     #return lon,lat,lev,np.sum(diffu_spectr,3),u_mn
@@ -73,8 +75,7 @@ def get_spectr(yr):
 
 #===== main program =====
     
-#data_fname='/home/cjliu/data/npz/Diffu350K_DJF_'+str(int(mask_sig))+'_'+str(yr_st)+'_'+str(yr_end)+'.npz'
-data_fname='/home/cjliu/data/npz/DiffuGrid350K_DJF_'+str(int(tLag))+'_'+str(yr_st)+'_'+str(yr_end)+'.npz'
+data_fname='/home/cjliu/data/npz/DiffuAuto350K_DJF_'+str(int(lonWidth))+'_'+str(yr_st)+'_'+str(yr_end)+'.npz'
 if PROCESS_FLAG:
 #    yr_num=0
 #    for yr in range(yr_st,yr_end+1):
@@ -170,15 +171,16 @@ grid_x,grid_y=plt_map(lon_fld,lat_fld)
 #plt_map.drawparallels(np.arange(-90,90,10),labels=[1,0,0,0],linewidth=0)
 #plt_map.drawmeridians(np.arange(0,360,30),labels=[0,0,0,1],linewidth=0)
 #plt_map.drawparallels(np.arange(-90,90,10),linewidth=0)
-#cs=plt_map.contourf(grid_x,grid_y,plt_fld/1e5,cmap=cm.rainbow,levels=[-200,0,50,100,150,200,250,300,350])
-cs=plt_map.contourf(grid_x,grid_y,plt_fld/1e5,cmap=cm.rainbow,levels=np.arange(-100,650.1,100))
+cs=plt_map.contourf(grid_x,grid_y,plt_fld/1e5,cmap=cm.rainbow,levels=np.arange(-50,350.1,50))
 plt_map.contour(grid_x,grid_y,u_mn_plt,colors='k',levels=np.arange(10,60.1,10))
 #plt_map.contour(grid_x,grid_y,grid_x,colors='k')
 ax=fig.add_axes([0.16,0.05,0.7,0.01])
 cb0=plt.colorbar(cs,cax=ax,orientation='horizontal')
-axes.set_title("350K "+str(yr_st)+'-'+str(yr_end)+" tLag="+str(tLag))
+#axes.set_title("350K "+str(yr_st)+'-'+str(yr_end)+"sig="+str(mask_sig))
+axes.set_title("350K "+str(yr_st)+'-'+str(yr_end)+' lonWidth='+str(lonWidth))
 
-plt.savefig("/home/cjliu/Documents/RESEARCH/2017/DIFFUSIVITY/FIGURES/11_2017/diffu_local_lag"+str(tLag)+"_"+str(yr_st)+"_"+str(yr_end)+".pdf",format='pdf')
+
+plt.savefig("/home/cjliu/Documents/RESEARCH/2017/DIFFUSIVITY/FIGURES/11_2017/diffu_auto_lonW"+str(lonWidth)+"_"+str(yr_st)+"_"+str(yr_end)+".pdf",format='pdf')
 plt.show()
 
 
