@@ -2,6 +2,7 @@ from netCDF4 import Dataset
 import numpy as np
 from scipy.fftpack import fft, ifft
 from diffu_class import mw_diffu,dc
+import matplotlib as mpl
 import matplotlib.pyplot as plt
 import matplotlib.colors as colors
 from matplotlib import cm
@@ -59,19 +60,28 @@ def get_spectr(yr):
     print( lev[zz])
 
     diffu_spectr=np.zeros([nz,ny,nx,nx])
-    diffu_grid=np.zeros([nz,ny,nx])
+
+    #==== generate lon_out,lat_out ====
+    lon_out=lon[::20]
+    lat_out=lat[::20]
+    print(lon_out)
+    print(lat_out)
+    nx_o=lon_out.shape[0]
+    ny_o=lat_out.shape[0]
+    #==================================
+    diffu_grid=np.zeros([nz,ny_o,nx_o])
     u_mn=np.zeros([nx,ny,nz])
     for zlev in range(zz,zz+1):
     #for zlev in range(nz):
         print(  'z=',zlev)
-        flow = mw_diffu(uwnd[:,zlev,:,:],vwnd[:,zlev,:,:],lon,lat)
+        flow = mw_diffu(uwnd[:,zlev,:,:],vwnd[:,zlev,:,:],lon,lat,lon_out,lat_out)
 
     #    diffu_grid[zlev,:,:] =np.mean(flow.get_diffu_grid(tLag),2)
         diffu_grid[zlev,:,:] =flow.get_diffu_traj(tLag)
         u_mn[:,:,zlev]=flow.um.T
 
     #return lon,lat,lev,np.sum(diffu_spectr,3),u_mn
-    return lon,lat,lev,diffu_grid,u_mn
+    return lon_out,lat_out,lev,diffu_grid,u_mn
 
 #===== main program =====
     
@@ -149,7 +159,7 @@ xl=xr-nx
 ii=0
 for i in range(xl,xr):
     plt_fld_tmp[:,ii]=plt_fld[:,i]
-    u_mn_tmp[:,ii]=u_mn[i,:,zz]
+    #u_mn_tmp[:,ii]=u_mn[i,:,zz]
     if lon[i]<0:
         lon_tmp[ii]=lon[i]+360.
     else:
@@ -159,7 +169,7 @@ lon=lon_tmp
 #plt_fld=plt_fld_tmp*nx/(np.sqrt(2*np.pi)*mask_sig)
 plt_fld=plt_fld_tmp
 
-u_mn_plt=u_mn_tmp
+#u_mn_plt=u_mn_tmp
 
 lon_fld,lat_fld=np.meshgrid(lon,lat)
 
@@ -171,9 +181,12 @@ grid_x,grid_y=plt_map(lon_fld,lat_fld)
 #plt_map.drawparallels(np.arange(-90,90,10),labels=[1,0,0,0],linewidth=0)
 #plt_map.drawmeridians(np.arange(0,360,30),labels=[0,0,0,1],linewidth=0)
 #plt_map.drawparallels(np.arange(-90,90,10),linewidth=0)
-cs=plt_map.contourf(grid_x,grid_y,plt_fld/1e5,cmap=cm.rainbow,levels=np.arange(-50,350.1,50))
-plt_map.contour(grid_x,grid_y,u_mn_plt,colors='k',levels=np.arange(10,60.1,10))
-#plt_map.contour(grid_x,grid_y,grid_x,colors='k')
+#cs=plt_map.contourf(grid_x,grid_y,plt_fld/1e5,cmap=cm.rainbow)
+cmap=cm.RdBu_r
+bounds=np.arange(-100,100.1,10.)
+norm=mpl.colors.BoundaryNorm(bounds,cmap.N)
+cs=plt_map.pcolor(grid_x,grid_y,plt_fld/1e5,cmap=cmap,norm=norm)
+#plt_map.contour(grid_x,grid_y,u_mn_plt,colors='k',levels=np.arange(10,60.1,10))
 ax=fig.add_axes([0.16,0.05,0.7,0.01])
 cb0=plt.colorbar(cs,cax=ax,orientation='horizontal')
 #axes.set_title("350K "+str(yr_st)+'-'+str(yr_end)+"sig="+str(mask_sig))
