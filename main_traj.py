@@ -14,9 +14,9 @@ from mpl_toolkits.basemap import Basemap
 PROCESS_FLAG=True
 #PROCESS_FLAG=False
 
-npro=1
+npro=8
 yr_st=1980
-yr_end=1980
+yr_end=1987
 fold_num=1
 #zlev=3
 zz=3
@@ -62,8 +62,8 @@ def get_spectr(yr):
     diffu_spectr=np.zeros([nz,ny,nx,nx])
 
     #==== generate lon_out,lat_out ====
-    lon_out=lon[::20]
-    lat_out=lat[::20]
+    lon_out=lon[::4]
+    lat_out=lat[::4]
     print(lon_out)
     print(lat_out)
     nx_o=lon_out.shape[0]
@@ -85,7 +85,7 @@ def get_spectr(yr):
 
 #===== main program =====
     
-data_fname='/home/cjliu/data/npz/testDiffuTraj350K_DJF_'+str(int(tLag))+'_'+str(yr_st)+'_'+str(yr_end)+'.npz'
+data_fname='/home/cjliu/data/npz/testDiffuTraj350K_uvm_DJF_'+str(int(tLag))+'_'+str(yr_st)+'_'+str(yr_end)+'.npz'
 if PROCESS_FLAG:
 #    yr_num=0
 #    for yr in range(yr_st,yr_end+1):

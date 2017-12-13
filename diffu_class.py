@@ -14,7 +14,7 @@ ylev=18
 xlev=8
 xlev_st=95
 xlev_end=115
-dw=6.0
+dw=2.0
 dc=2
 
 class mw_diffu:
@@ -198,12 +198,17 @@ class mw_diffu:
 
 
     #def get_diffu(self,mask_func):
-    def get_diffu_spectr(self,mask_func,option='lonRes'):
+    def get_diffu_spectr(self,mask_func_org,option='lonRes'):
         vMask=np.zeros([self.nx,self.nt])
         u_mn=np.zeros([self.nx,self.ny])
         diffu_spectr=np.zeros([self.ny,self.nx,self.nx])
         u_zm=np.mean(u_mn,0)
 
+
+        if option=='zm':
+            mask_func=mask_func_org*0.+1.
+        else:
+            mask_func=mask_func_org*1.
         for y in range(self.ny):
             #print 'y=',y
         #for y in range(85,86):
@@ -427,11 +432,11 @@ class mw_diffu:
         if var=='va':
             varFld=self.va
         result[tLag]=traj.interp2d(lon0,lat0,t,self.lon,self.lat,varFld)
-		#==== debug code ====
-		#um_temp=np.zeros(self.u.shape)
-		#for t in 
-		#um_temp[:]
-		#====================
+        #==== debug code ====
+        #um_temp=np.zeros(self.u.shape)
+        #for t in 
+        #um_temp[:]
+        #====================
 
         for fbFlag in [-1,1]:    
             lon1=lon0
