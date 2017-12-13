@@ -23,7 +23,7 @@ zz=3
 #ylev=37
 #xlev=0
 mask_sig=120.
-tLag=60
+tLag=30
 lonWidth=15.
 
 def get_spectr(yr):
@@ -85,7 +85,7 @@ def get_spectr(yr):
 
 #===== main program =====
     
-data_fname='/home/cjliu/data/npz/DiffuTraj350K_DJF_'+str(int(tLag))+'_'+str(yr_st)+'_'+str(yr_end)+'.npz'
+data_fname='/home/cjliu/data/npz/testDiffuTraj350K_DJF_'+str(int(tLag))+'_'+str(yr_st)+'_'+str(yr_end)+'.npz'
 if PROCESS_FLAG:
 #    yr_num=0
 #    for yr in range(yr_st,yr_end+1):
@@ -105,17 +105,23 @@ if PROCESS_FLAG:
     lon=np.array(results[0][0])
     lat=np.array(results[0][1])
     lev=np.array(results[0][2])
+    diffu_spectr=[]
+    u_mn=[]
     ps_num=len(results)
     ps=0
     for i in range(ps_num):
-        if i==0:
-            diffu_spectr=results[i][3]
-            u_mn=results[i][4]
-        else:
-            diffu_spectr+=results[i][3]
-            u_mn+=results[i][4]
-    diffu_spectr/=ps_num
-    u_mn/=ps_num
+        diffu_spectr.append(results[i][3])
+        u_mn.append(results[i][4])
+#        if i==0:
+#            diffu_spectr=results[i][3]
+#            u_mn=results[i][4]
+#        else:
+#            diffu_spectr+=results[i][3]
+#            u_mn+=results[i][4]
+#    diffu_spectr/=ps_num
+#    u_mn/=ps_num
+    diffu_spectr=np.array(diffu_spectr)
+    u_mn=np.array(u_mn)
         
 
     np.savez(data_fname,lon=lon,lat=lat,lev=lev,diffu_spectr=diffu_spectr,u_mn=u_mn)
@@ -130,7 +136,7 @@ else:
 nx=lon.shape[0]
 ny=lat.shape[0]
 nt=360
-fig,axes=plt.subplots(1,1,figsize=[8,5])
+fig,axes=plt.subplots(2,1,figsize=[8,8])
 
 #=== plot line plot ===
 #axes.plot(lat,np.mean(diffu_spectr[zz,:,:],1))
@@ -148,7 +154,7 @@ fig,axes=plt.subplots(1,1,figsize=[8,5])
 
 #=== plot lon lat plot ===
 zz=3
-plt_fld=diffu_spectr[zz,:,:]
+plt_fld=np.mean(diffu_spectr[10:15,:,:,:],0)[zz,:,:]
 #*** transform longitude ***
 dim=plt_fld.shape
 plt_fld_tmp=np.zeros(dim)
@@ -175,25 +181,27 @@ lon_fld,lat_fld=np.meshgrid(lon,lat)
 
 
 #axes.contourf(lon_fld,lat_fld,plt_fld)
-plt_map=Basemap(projection='cyl',llcrnrlon=0,llcrnrlat=-80,urcrnrlon=360,urcrnrlat=80,ax=axes,resolution='l')
+plt_map=Basemap(projection='cyl',llcrnrlon=0,llcrnrlat=-80,urcrnrlon=360,urcrnrlat=80,ax=axes[0],resolution='l')
 plt_map.drawcoastlines(linewidth=0.8,color='gray')
 grid_x,grid_y=plt_map(lon_fld,lat_fld)
 #plt_map.drawparallels(np.arange(-90,90,10),labels=[1,0,0,0],linewidth=0)
 #plt_map.drawmeridians(np.arange(0,360,30),labels=[0,0,0,1],linewidth=0)
 #plt_map.drawparallels(np.arange(-90,90,10),linewidth=0)
 #cs=plt_map.contourf(grid_x,grid_y,plt_fld/1e5,cmap=cm.rainbow)
-cmap=cm.RdBu_r
-bounds=np.arange(-100,100.1,10.)
+#cmap=cm.RdBu_r
+cmap=cm.rainbow
+bounds=np.arange(-10,100.1,10.)
 norm=mpl.colors.BoundaryNorm(bounds,cmap.N)
 cs=plt_map.pcolor(grid_x,grid_y,plt_fld/1e5,cmap=cmap,norm=norm)
 #plt_map.contour(grid_x,grid_y,u_mn_plt,colors='k',levels=np.arange(10,60.1,10))
 ax=fig.add_axes([0.16,0.05,0.7,0.01])
 cb0=plt.colorbar(cs,cax=ax,orientation='horizontal')
-#axes.set_title("350K "+str(yr_st)+'-'+str(yr_end)+"sig="+str(mask_sig))
-axes.set_title("350K "+str(yr_st)+'-'+str(yr_end)+' tLag='+str(tLag))
+axes[0].set_title("350K "+str(yr_st)+'-'+str(yr_end)+' tLag='+str(tLag/4.))
 
-
-#plt.savefig("/home/cjliu/Documents/RESEARCH/2017/DIFFUSIVITY/FIGURES/11_2017/diffu_traj_tLag"+str(tLag)+"_"+str(yr_st)+"_"+str(yr_end)+".pdf",format='pdf')
+zm=np.mean(plt_fld,1)/1e5
+axes[1].plot(lat,zm)
+axes[1].set_xlim(-85,85)
+#plt.savefig("/home/cjliu/Documents/RESEARCH/2017/DIFFUSIVITY/FIGURES/12_2017/diffu_trajZM_tLag"+str(tLag)+"_"+str(yr_st)+"_"+str(yr_end)+".pdf",format='pdf')
 plt.show()
 
 
