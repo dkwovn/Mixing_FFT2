@@ -427,13 +427,19 @@ class mw_diffu:
         if var=='va':
             varFld=self.va
         result[tLag]=traj.interp2d(lon0,lat0,t,self.lon,self.lat,varFld)
+		#==== debug code ====
+		#um_temp=np.zeros(self.u.shape)
+		#for t in 
+		#um_temp[:]
+		#====================
 
         for fbFlag in [-1,1]:    
             lon1=lon0
             lat1=lat0
             for tt in range(tLag):
                 #lon2,lat2=traj.intgr2d(lon1,lat1,self.lon,self.lat,self.u,self.v,t+fbFlag*tt,self.deltaT,fbFlag)
-                lon2,lat2=traj.intgr2d(lon1,lat1,self.lon,self.lat,self.u,self.v*0.,t+fbFlag*tt,self.deltaT,fbFlag)
+                #lon2,lat2=traj.intgr2d(lon1,lat1,self.lon,self.lat,self.u,self.v*0.,t+fbFlag*tt,self.deltaT,fbFlag)
+                lon2,lat2=traj.intgr2d(lon1,lat1,self.lon,self.lat,self.u*0.+self.um,self.v*0.+self.vm,t+fbFlag*tt,self.deltaT,fbFlag)
                 lon1=lon2
                 lat1=lat2
                 result[tLag+fbFlag*(tt+1)]=traj.interp2d(lon2,lat2,t+fbFlag*(tt+1),self.lon,self.lat,varFld)
