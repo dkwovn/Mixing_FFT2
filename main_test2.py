@@ -20,7 +20,7 @@ zz=3
 #ylev=37
 #xlev=0
 mask_sig=10.
-tLag=60
+tLag=30
 
 def get_spectr(yr):
     #yr_num=0
@@ -75,6 +75,22 @@ def get_spectr(yr):
     
 data_fname='npz/DiffuGrid350K_DJF_'+str(int(mask_sig))+'_'+str(yr_st)+'_'+str(yr_end)+'.npz'
 
+#pool=mp.Pool(processes=npro)
+#output=[pool.apply_async(get_spectr,args=(yr,)) for yr in range(yr_st,yr_end+1)]
+#results=[p.get() for p in output]
+#lon=np.array(results[0][0])
+#lat=np.array(results[0][1])
+#lev=np.array(results[0][2])
+#ps_num=len(results)
+#ps=0
+#for i in range(ps_num):
+#    if i==0:
+#        corr_U=results[i][4]
+#        result2=results[i][-1]
+#    else:
+#        corr_U+=results[i][4]
+#        result2+=results[i][-1]
+
 lon,lat,lev,result,corr_U,lon_rel,u_lon,result2=get_spectr(1980)
 u_lon=u_lon*86400.
 fig,axes=plt.subplots(2,1,figsize=(8,8))
@@ -99,16 +115,17 @@ integral[:]=np.sum(corr_U)/(bnd_idx*2)
 axes[1].plot(t_plt,corr_U)
 axes[1].plot(t_plt,integral)
 axes[1].plot(t_plt,integral-integral,'k',linestyle='--')
-#axes[1].set_xlim(-10.,10.)
-axes[1].set_xlim(-1.*t_cutoff,t_cutoff)
+axes[1].set_xlim(-10.,10.)
+#axes[1].set_xlim(-1.*t_cutoff,t_cutoff)
 
 integral=np.zeros(t_plt.shape)
 integral[:]=np.sum(result2[:,ylev,xlev],0)/(bnd_idx*2)
 axes[0].plot(t_plt,result2[:,ylev,xlev])
 axes[0].plot(t_plt,integral)
 axes[0].plot(t_plt,integral-integral,'k',linestyle='--')
-axes[0].set_xlim(-1.*t_cutoff,t_cutoff)
+#axes[0].set_xlim(-1.*t_cutoff,t_cutoff)
+axes[0].set_xlim(-10.,10.)
 axes[0].set_title('lon='+str(lon[xlev])+' lat='+str(lat[ylev]))
-plt.savefig('/home/cjliu/Documents/RESEARCH/2017/DIFFUSIVITY/FIGURES/11_2017/traj_auto_test'+str(xlev)+'_'+str(ylev)+'.pdf',format='pdf')
+#plt.savefig('/home/cjliu/Documents/RESEARCH/2017/DIFFUSIVITY/FIGURES/11_2017/traj_auto_test'+str(xlev)+'_'+str(ylev)+'.pdf',format='pdf')
 plt.show()
 

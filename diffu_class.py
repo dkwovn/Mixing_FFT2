@@ -220,7 +220,11 @@ class mw_diffu:
                 #==== calculate local average U ====
                 #U=self.localU(x,y,mask_func)
         #        u_mn[x,y]=self.localU(x,y,mask_func)
-                u_mn[x,y]=self.um[y,x]
+                if option=='lonRes':
+                    u_mn[x,y]=self.um[y,x]
+                else:
+                    u_mn[x,y]=self.localU(x,y,mask_func)
+
                 for t in range(self.nt):
                     #=== apply mask ===
                     for xx in range(self.nx):

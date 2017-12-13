@@ -10,8 +10,9 @@ from traj import traj
 
 a=6.378e6
 seconds_in_a_day = 86400
-ylev=105
-xlev=100
+ylev=37
+#xlev=207
+xlev=230
 dw=2.0
 dc=2
 

@@ -11,7 +11,7 @@ from mpl_toolkits.basemap import Basemap
 
 
 PROCESS_FLAG=True
-#PROCESS_FLAG=False
+PROCESS_FLAG=False
 
 npro=16
 yr_st=1980
@@ -23,7 +23,8 @@ zz=3
 #xlev=0
 mask_sig=120.
 tLag=60
-lonWidth=15.
+lonWidth=30.
+tSigma=30/4. #in days
 
 def get_spectr(yr):
     #yr_num=0
@@ -67,7 +68,8 @@ def get_spectr(yr):
         flow = mw_diffu(uwnd[:,zlev,:,:],vwnd[:,zlev,:,:],lon,lat)
 
     #    diffu_grid[zlev,:,:] =np.mean(flow.get_diffu_grid(tLag),2)
-        diffu_grid[zlev,:,:] =flow.get_diffu_grid3(tLag,lonWidth)
+        #diffu_grid[zlev,:,:] =flow.get_diffu_grid3(tLag,lonWidth)
+        diffu_grid[zlev,:,:] =flow.get_diffu_auto_wt(tLag,lonWidth,tSigma)
         u_mn[:,:,zlev]=flow.um.T
 
     #return lon,lat,lev,np.sum(diffu_spectr,3),u_mn
@@ -75,6 +77,7 @@ def get_spectr(yr):
 
 #===== main program =====
     
+#data_fname='/home/cjliu/data/npz/DiffuAutoWt350K_DJF_lonW'+str(int(lonWidth))+'_tSig'+str(tSigma)+'_'+str(yr_st)+'_'+str(yr_end)+'.npz'
 data_fname='/home/cjliu/data/npz/DiffuAuto350K_DJF_'+str(int(lonWidth))+'_'+str(yr_st)+'_'+str(yr_end)+'.npz'
 if PROCESS_FLAG:
 #    yr_num=0
@@ -120,7 +123,7 @@ else:
 nx=lon.shape[0]
 ny=lat.shape[0]
 nt=360
-fig,axes=plt.subplots(1,1,figsize=[8,5])
+fig,axes=plt.subplots(2,1,figsize=[6,8])
 
 #=== plot line plot ===
 #axes.plot(lat,np.mean(diffu_spectr[zz,:,:],1))
@@ -164,22 +167,28 @@ u_mn_plt=u_mn_tmp
 lon_fld,lat_fld=np.meshgrid(lon,lat)
 
 
+#lon_fld,lat_fld=np.meshgrid
 #axes.contourf(lon_fld,lat_fld,plt_fld)
-plt_map=Basemap(projection='cyl',llcrnrlon=0,llcrnrlat=-80,urcrnrlon=360,urcrnrlat=80,ax=axes,resolution='l')
+plt_map=Basemap(projection='cyl',llcrnrlon=0,llcrnrlat=-80,urcrnrlon=360,urcrnrlat=80,ax=axes[0],resolution='l')
 plt_map.drawcoastlines(linewidth=0.8,color='gray')
 grid_x,grid_y=plt_map(lon_fld,lat_fld)
 #plt_map.drawparallels(np.arange(-90,90,10),labels=[1,0,0,0],linewidth=0)
 #plt_map.drawmeridians(np.arange(0,360,30),labels=[0,0,0,1],linewidth=0)
 #plt_map.drawparallels(np.arange(-90,90,10),linewidth=0)
-cs=plt_map.contourf(grid_x,grid_y,plt_fld/1e5,cmap=cm.rainbow,levels=np.arange(-50,350.1,50))
+#cs=plt_map.contourf(grid_x,grid_y,plt_fld/1e5,cmap=cm.rainbow,levels=np.arange(-50,350.1,50))
+cs=plt_map.contourf(grid_x,grid_y,plt_fld/1e5,cmap=cm.rainbow)
 plt_map.contour(grid_x,grid_y,u_mn_plt,colors='k',levels=np.arange(10,60.1,10))
 #plt_map.contour(grid_x,grid_y,grid_x,colors='k')
 ax=fig.add_axes([0.16,0.05,0.7,0.01])
 cb0=plt.colorbar(cs,cax=ax,orientation='horizontal')
 #axes.set_title("350K "+str(yr_st)+'-'+str(yr_end)+"sig="+str(mask_sig))
-axes.set_title("350K "+str(yr_st)+'-'+str(yr_end)+' lonWidth='+str(lonWidth))
+axes[0].set_title("350K "+str(yr_st)+'-'+str(yr_end)+' lonWidth='+str(lonWidth))
+
+zm=np.mean(plt_fld,1)
+axes[1].plot(lat,zm)
 
 
+#plt.savefig("/home/cjliu/Documents/RESEARCH/2017/DIFFUSIVITY/FIGURES/11_2017/diffu_auto_lonW"+str(lonWidth)+"_tSig"+str(tSigma)+'_'+str(yr_st)+"_"+str(yr_end)+".pdf",format='pdf')
 plt.savefig("/home/cjliu/Documents/RESEARCH/2017/DIFFUSIVITY/FIGURES/11_2017/diffu_auto_lonW"+str(lonWidth)+"_"+str(yr_st)+"_"+str(yr_end)+".pdf",format='pdf')
 plt.show()
 
