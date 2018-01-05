@@ -12,8 +12,8 @@ a=6.378e6
 seconds_in_a_day = 86400
 ylev=18
 xlev=8
-xlev_st=95
-xlev_end=115
+xlev_st=100
+xlev_end=130
 dw=2.0
 dc=2
 
@@ -33,6 +33,7 @@ class mw_diffu:
     lon_m=None #lon for mask
     ff=None
     kk=None
+    cc=None
     nx=None
     ny=None
     nt=None
@@ -97,7 +98,7 @@ class mw_diffu:
         if u_in.ndim!=3 or v_in.ndim!=3:
             print( 'ERROR: input dimension must be 3!')
             print( 'The shape should be (time,lat,lon)')
-        #=== get ff,kk ===
+        #=== get ff,kk, cc ===
         self.kk=np.zeros(self.nx)
         self.ff=np.zeros(self.nt)
 
@@ -112,6 +113,9 @@ class mw_diffu:
                 self.ff[j]=j
             else:
                 self.ff[j]=j-self.nt
+
+        #self.cc=np.arange(-50,50,dc)*1.0
+        self.cc=np.arange(0,50,dc)*1.0
         #=== have not tested it yet ===
         self.ff=-1*self.ff
 
@@ -205,21 +209,21 @@ class mw_diffu:
         u_zm=np.mean(u_mn,0)
 
 
+        rh_fld = []
+
         if option=='zm':
             mask_func=mask_func_org*0.+1.
         else:
             mask_func=mask_func_org*1.
         for y in range(self.ny):
-            #print 'y=',y
-        #for y in range(85,86):
+
             if option=='zm':
                 x_list=range(xlev,xlev+1)
             elif option=='lonRes':
                 x_list=range(self.nx)
+
             for x in x_list:
                 #==== calculate local average U ====
-                #U=self.localU(x,y,mask_func)
-        #        u_mn[x,y]=self.localU(x,y,mask_func)
                 if option=='lonRes':
                     u_mn[x,y]=self.um[y,x]
                 else:
@@ -229,11 +233,48 @@ class mw_diffu:
                     #=== apply mask ===
                     for xx in range(self.nx):
                         vMask[x+xx-self.nx,t]=self.va[t,y,x+xx-self.nx]*mask_func[xx]
-                vSpectr2=fft2(vMask)/(self.nx*self.nt)
-                diffu_spectr[y,x,:]=self.extractC_wt2(abs(vSpectr2)**2,u_mn[x,y],y)
+                #vSpectr2=fft2(vMask)/(self.nx*self.nt)
+                #diffu_spectr[y,x,:]=self.extractC_wt2(abs(vSpectr2)**2,u_mn[x,y],y)
+                vSpectr2=abs(fft2(vMask)/(self.nx*self.nt))**2
+                diffu_spectr[y,x,:]=self.extractC_wt2(vSpectr2,u_mn[x,y],y)
 
         return diffu_spectr,u_mn
 
+    def get_diffu_rh(self,mask_func_org,option='lonRes'):
+        vMask=np.zeros([self.nx,self.nt])
+        u_mn=np.zeros([self.nx,self.ny])
+        diffu_spectr=np.zeros([self.ny,self.nx,self.nx])
+        u_zm=np.mean(u_mn,0)
+
+        rh_fld = []
+
+        if option=='zm':
+            mask_func=mask_func_org*0.+1.
+        else:
+            mask_func=mask_func_org*1.
+        for y in range(self.ny):
+
+            if option=='zm':
+                x_list=range(xlev,xlev+1)
+            elif option=='lonRes':
+                x_list=range(self.nx)
+
+            for x in x_list:
+                #==== calculate local average U ====
+                if option=='lonRes':
+                    u_mn[x,y]=self.um[y,x]
+                else:
+                    u_mn[x,y]=self.localU(x,y,mask_func)
+
+                for t in range(self.nt):
+                    #=== apply mask ===
+                    for xx in range(self.nx):
+                        vMask[x+xx-self.nx,t]=self.va[t,y,x+xx-self.nx]*mask_func[xx]
+                vSpectr2=abs(fft2(vMask)/(self.nx*self.nt))**2
+                diffu_spectr[y,x,:]=self.extractC_wt2(vSpectr2,u_mn[x,y],y)
+                rh_fld.append(self.randel_held(vSpectr2,y))
+
+        return diffu_spectr,u_mn,np.array(rh_fld)
     #=== use autocorrelation to get diffu ===
     def get_diffu_grid3(self,tLag,dlon):
         #dlon=half length of lon window
@@ -446,9 +487,9 @@ class mw_diffu:
             lon1=lon0
             lat1=lat0
             for tt in range(tLag):
-                #lon2,lat2=traj.intgr2d(lon1,lat1,self.lon,self.lat,self.u,self.v,t+fbFlag*tt,self.deltaT,fbFlag)
-                #lon2,lat2=traj.intgr2d(lon1,lat1,self.lon,self.lat,self.u,self.v*0.,t+fbFlag*tt,self.deltaT,fbFlag)
-                lon2,lat2=traj.intgr2d(lon1,lat1,self.lon,self.lat,self.u*0.+self.um,self.v*0.+self.vm,t+fbFlag*tt,self.deltaT,fbFlag)
+                lon2,lat2=traj.intgr2d(lon1,lat1,self.lon,self.lat,self.u,self.v,t+fbFlag*tt,self.deltaT,fbFlag)
+            #    lon2,lat2=traj.intgr2d(lon1,lat1,self.lon,self.lat,self.u,self.v*0.,t+fbFlag*tt,self.deltaT,fbFlag)
+        #        lon2,lat2=traj.intgr2d(lon1,lat1,self.lon,self.lat,self.u*0.+self.um,self.v*0.+self.vm,t+fbFlag*tt,self.deltaT,fbFlag)
                 lon1=lon2
                 lat1=lat2
                 result[tLag+fbFlag*(tt+1)]=traj.interp2d(lon2,lat2,t+fbFlag*(tt+1),self.lon,self.lat,varFld)
@@ -526,6 +567,16 @@ class mw_diffu:
         
                 #self.vvSpectr[x,y,:]=abs(self.extractC(vSpectr2,U,y))**2
         return Spectr_yc,Spectr_yc2,u_mn
+
+    def randel_held(self,spectr2,y):
+        #cc=np.arange(-50,50,dc)*1.0
+        c_num=self.cc.shape[0]
+
+        Spectr_c=np.zeros([c_num])
+        for n,c in enumerate(self.cc):
+        #    Spectr_c[x,n]=np.sum(self.extractC_wt(abs(vSpectr2)**2,c,y),0)
+            Spectr_c[n]=np.sum(self.extractC_wt(spectr2,c,y),0)
+        return Spectr_c
 
     def frequency(self):
         freq=np.zeros(self.nt)

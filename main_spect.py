@@ -15,14 +15,15 @@ PROCESS_FLAG=True
 
 npro=8
 yr_st=1980
-yr_end=1995
+yr_end=1987
 fold_num=16
 #zlev=3
 zz=3
 ylev=37
 xlev=0
-mask_sig=120.
+mask_sig=180.
 tLag=120
+seasonStr='DJF'
 day_st=237
 day_end=605
 
@@ -39,18 +40,18 @@ def get_spectr(yr):
     lon = dfile.variables["lon"][:]
     lat = dfile.variables["lat"][:]
     lev = dfile.variables["lev"][:]
-    time1 = dfile.variables["time"][day_st:day_end]/(24.*60)
-    uwnd1 = dfile.variables["U"][day_st:day_end,:,:,:]
-    vwnd1 = dfile.variables["V"][day_st:day_end,:,:,:]
-#    time1 = dfile.variables["time"][-94:]/(24.*60)
-#    uwnd1 = dfile.variables["U"][-94:,:,:,:]
-#    vwnd1 = dfile.variables["V"][-94:,:,:,:]
-    #time2 = dfile2.variables["time"][:236]/(24.*60)
-    #uwnd2 = dfile2.variables["U"][:236,:,:,:]
-    #vwnd2 = dfile2.variables["V"][:236,:,:,:]
-    #time = np.concatenate((time1,time2),axis=0)
-    #uwnd = np.concatenate((uwnd1,uwnd2),axis=0)
-    #vwnd = np.concatenate((vwnd1,vwnd2),axis=0)
+#    time1 = dfile.variables["time"][day_st:day_end]/(24.*60)
+#    uwnd1 = dfile.variables["U"][day_st:day_end,:,:,:]
+#    vwnd1 = dfile.variables["V"][day_st:day_end,:,:,:]
+    time1 = dfile.variables["time"][-94:]/(24.*60)
+    uwnd1 = dfile.variables["U"][-94:,:,:,:]
+    vwnd1 = dfile.variables["V"][-94:,:,:,:]
+    time2 = dfile2.variables["time"][:236]/(24.*60)
+    uwnd2 = dfile2.variables["U"][:236,:,:,:]
+    vwnd2 = dfile2.variables["V"][:236,:,:,:]
+    time = np.concatenate((time1,time2),axis=0)
+    uwnd = np.concatenate((uwnd1,uwnd2),axis=0)
+    vwnd = np.concatenate((vwnd1,vwnd2),axis=0)
     time = time1
     uwnd = uwnd1
     vwnd = vwnd1
@@ -73,8 +74,8 @@ def get_spectr(yr):
 
         maskFunc=flow.genMaskGauss(mask_sig)
     #    diffu_grid[zlev,:,:] =np.mean(flow.get_diffu_grid(tLag),2)
-#        diffu_spectr[zlev,:,:,:],um =flow.get_diffu_spectr(maskFunc,'lonRes')
-        diffu_spectr[zlev,:,:,:],um =flow.get_diffu_spectr(maskFunc,'zm')
+        diffu_spectr[zlev,:,:,:],um =flow.get_diffu_spectr(maskFunc,'lonRes')
+        #diffu_spectr[zlev,:,:,:],um =flow.get_diffu_spectr(maskFunc,'zm')
         u_mn[:,:,zlev]=um
 
     return lon,lat,lev,np.sum(diffu_spectr,3),u_mn
@@ -82,7 +83,7 @@ def get_spectr(yr):
 
 #===== main program =====
     
-data_fname='/home/cjliu/data/npz/Diffu350K_U0_MAM_'+str(int(mask_sig))+'_'+str(yr_st)+'_'+str(yr_end)+'.npz'
+data_fname='/home/cjliu/data/npz/Diffu350K_U0_'+seasonStr+'_'+str(int(mask_sig))+'_'+str(yr_st)+'_'+str(yr_end)+'.npz'
 #data_fname='/home/cjliu/data/npz/DiffuGrid350K_DJF_'+str(int(tLag))+'_'+str(yr_st)+'_'+str(yr_end)+'.npz'
 if PROCESS_FLAG:
 #    yr_num=0
@@ -190,7 +191,7 @@ zm=np.mean(plt_fld,1)/1e5
 axes[1].plot(lat,zm)
 axes[1].set_xlim(-85,85)
 
-plt.savefig("/home/cjliu/Documents/RESEARCH/2017/DIFFUSIVITY/FIGURES/11_2017/diffu_spectr_350K_lonSig"+str(mask_sig)+'_'+str(yr_st)+"_"+str(yr_end)+".pdf",format='pdf')
+plt.savefig("/home/cjliu/Documents/RESEARCH/2017/DIFFUSIVITY/FIGURES/12_2017/diffu_spectr_350K_lonSig"+str(mask_sig)+'_'+str(yr_st)+"_"+str(yr_end)+".pdf",format='pdf')
 plt.show()
 
 
