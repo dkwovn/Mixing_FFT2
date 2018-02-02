@@ -14,15 +14,16 @@ from scipy.stats import pearsonr
 PROCESS_FLAG=True
 PROCESS_FLAG=False
 
-npro=18
+sigLvl=0.05
+npro=16
 yr_st=1980
 yr_end=2015
 fold_num=16
-zlev=3
-zz=3
+#zlev=3
+zz=7
 ylev=37
 #xlev=0
-mask_sig=90.
+mask_sig=120.
 tLag=120
 seasonStr="DJF"
 day_st0=-94
@@ -33,16 +34,16 @@ day_end0=236
 #day_end=973
 #day_st=973
 #day_end=973+364
-sigLvl = 0.05
 
 
 def get_spectr(yr):
     #yr_num=0
     #for yr in range(yr_st,yr_end+1):
     print( str(yr))
-    df1_name = '/home/cjliu/data/MERRA2/6hourly/ivar.middle.'+str(yr)+'.nc'
-    df2_name = '/home/cjliu/data/MERRA2/6hourly/ivar.middle.'+str(yr+1)+'.nc'
-#        df_name = '/home/cjliu/data/MERRA2/6hourly/merra2.'+str(yr)+'.nc4'
+    #df1_name = '/home/cjliu/data/MERRA2/6hourly/ivar2.'+str(yr)+'.nc'
+    #df2_name = '/home/cjliu/data/MERRA2/6hourly/ivar2.'+str(yr+1)+'.nc'
+    df1_name = '/home/cjliu/data/MERRA2/6hourly/merra2.'+str(yr)+'.nc4'
+    df2_name = '/home/cjliu/data/MERRA2/6hourly/merra2.'+str(yr+1)+'.nc4'
     dfile = Dataset(df1_name,mode='r')
     dfile2 = Dataset(df2_name,mode='r')
     lon = dfile.variables["lon"][:]
@@ -98,7 +99,7 @@ def get_spectr(yr):
 
 #===== main program =====
     
-data_fname='/home/cjliu/data/npz/DiffuSpectrRH_zm_'+seasonStr+'_'+str(yr_st)+'_'+str(yr_end)+'.npz'
+data_fname='/home/cjliu/data/npz/DiffuSpectrRH_zmP_'+seasonStr+'_'+str(yr_st)+'_'+str(yr_end)+'.npz'
 if PROCESS_FLAG:
     pool=mp.Pool(processes=npro)
     output=[pool.apply_async(get_spectr,args=(yr,)) for yr in range(yr_st,yr_end+1)]
@@ -181,45 +182,6 @@ def linTrend_diff(var):
 # u_mn[nt,nx,ny,nz]
 # rh_fld[nt,nz,ny,nc]
 
-#fig,axes=plt.subplots(2,1,figsize=[6,9]) 
-#nx=lon.shape[0]
-#ny=lat.shape[0]
-#nt=360
-##=== plot lat lev plot  ===
-#grid_x,grid_y=np.meshgrid(lat,lev)
-#diffu_trend, diffu_pVal = linTrend(diffu_spectr[:,:,:,xlev])
-#diffu_spectr = np.mean(diffu_spectr[:,:,:,xlev],0)
-#u_st,u_end = linTrend_diff(u_mn[:,xlev,:,:])
-#u_mn = np.mean(u_mn,0)
-#rh_fld_trend, rh_pVal = linTrend(rh_fld[:,zz,:,:])
-#rh_fld = np.mean(rh_fld[:,zz,:,:],0)
-##plt_fld=diffu_spectr[:,:]
-#levs=[0.1,0.2,0.4,0.8,1.6,3.2,6.4,12.8,25.6,51.2]
-##cs=axes[0].contourf(grid_x,grid_y,np.log(plt_fld)/np.log(10.),cmap=cm.Oranges,levels=np.arange(4,7,0.2))
-#cs2=axes[0].contour(grid_x,grid_y,u_mn[xlev,:,:].T,colors='k',levels=[10.,20.,30.,40.])
-#axes[0].contour(grid_x,grid_y,grid_y,colors='k',linestyles='--',levels=(lev[zz],))
-##cs2=axes[0].contour(grid_x,grid_y,u_st[:,:].T,colors='k',levels=[10.,20.,30.,40.])
-##cs2=axes[0].contour(grid_x,grid_y,u_end[:,:].T,colors='r',levels=[10.,20.,30.,40.])
-#cs=axes[0].contourf(grid_x,grid_y,diffu_trend/1e4,cmap=cm.RdBu_r,levels=np.arange(-4,4.01,0.4))
-##cs2=axes[0].contour(grid_x,grid_y,u_mn[xlev,:,:].T,colors='k')
-#ax=fig.add_axes([0.16,0.49,0.7,0.01])
-#cb0=plt.colorbar(cs,cax=ax,orientation='horizontal')
-#axes[0].clabel(cs2,fmt="%.0f")
-#axes[0].set_title("Zonal mean diffusivity")
-#axes[0].set_xticks(np.arange(-80,80.1,20.))
-#axes[0].contourf(grid_x,grid_y,sigLvl-diffu_pVal,levels=[-1e9,0,1e9],hatches=[None,'////'],colors='none')
-#
-##=== plot rh91 plot ===
-#grid_x,grid_y = np.meshgrid(cc,lat)
-#cs3=axes[1].contourf(grid_x,grid_y,rh_fld_trend,cmap=cm.RdBu_r,levels=np.arange(-0.14,0.141,0.02))
-#cs4=axes[1].contour(grid_x,grid_y,rh_fld,colors='grey',levels=np.arange(5,25,5))
-#axes[1].clabel(cs4,fmt="%.0f")
-#axes[1].plot(u_st[:,zz],lat,color='k',linestyle='--')
-#axes[1].plot(u_end[:,zz],lat,color='k',linestyle='-')
-#ax=fig.add_axes([0.16,0.05,0.7,0.01])
-#cb0=plt.colorbar(cs3,cax=ax,orientation='horizontal')
-#axes[1].contourf(grid_x,grid_y,sigLvl-rh_pVal,levels=[-1e9,0,1e9],hatches=[None,'///'],colors='none')
-
 fig = plt.figure(figsize=[6,9])
 fig_ax1 = fig.add_axes([0.1,0.55,0.8,0.4])
 fig_ax2 = fig.add_axes([0.1,0.1,0.8,0.35])
@@ -245,7 +207,7 @@ fig_ax1.clabel(cs2,fmt="%.0f")
 fig_ax1.set_title("Zonal mean diffusivity")
 fig_ax1.set_xticks(np.arange(-80,80.1,20.))
 fig_ax1.contourf(grid_x,grid_y,sigLvl-diffu_pVal,levels=[-1e9,0,1e9],hatches=[None,'////'],colors='none')
-#fig_ax1.invert_yaxis()
+fig_ax1.invert_yaxis()
 
 #=== plot rh91 plot ===
 grid_x,grid_y = np.meshgrid(cc,lat)
@@ -258,7 +220,7 @@ ax=fig.add_axes([0.16,0.05,0.7,0.01])
 cb0=plt.colorbar(cs3,cax=ax,orientation='horizontal')
 fig_ax2.contourf(grid_x,grid_y,sigLvl-rh_pVal,levels=[-1e9,0,1e9],hatches=[None,'///'],colors='none')
 
-#plt.savefig("/home/cjliu/Documents/RESEARCH/2017/DIFFUSIVITY/FIGURES/12_2017/diffu_rh_zm_"+seasonStr+str(lev[zz])+'_'+str(yr_st)+"_"+str(yr_end)+".pdf",format='pdf')
+plt.savefig("/home/cjliu/Documents/RESEARCH/2017/DIFFUSIVITY/FIGURES/12_2017/diffu_rh_zmP_"+seasonStr+str(lev[zz])+'_'+str(yr_st)+"_"+str(yr_end)+".pdf",format='pdf')
 plt.show()
 
 

@@ -7,6 +7,7 @@ import matplotlib.colors as colors
 from matplotlib import cm
 import multiprocessing as mp
 from mpl_toolkits.basemap import Basemap
+from plot_funcs import plot_local_diffu_NH_col1
 #print 'Multi-wavenumber theory for diffusivity\n'
 
 
@@ -15,24 +16,18 @@ PROCESS_FLAG=False
 
 npro=16
 yr_st=1980
-yr_end=1995
+yr_end=2015
 fold_num=1
-#zlev=3
 zz=3
-#ylev=37
-#xlev=0
 mask_sig=120.
 tLag=60
-lonWidth=30.
+lonWidth=120.
 tSigma=30/4. #in days
 
 def get_spectr(yr):
-    #yr_num=0
-    #for yr in range(yr_st,yr_end+1):
     print( str(yr))
     df1_name = '/home/cjliu/data/MERRA2/6hourly/ivar2.'+str(yr)+'.nc'
     df2_name = '/home/cjliu/data/MERRA2/6hourly/ivar2.'+str(yr+1)+'.nc'
-#        df_name = '/home/cjliu/data/MERRA2/6hourly/merra2.'+str(yr)+'.nc4'
     dfile = Dataset(df1_name,mode='r')
     dfile2 = Dataset(df2_name,mode='r')
     lon = dfile.variables["lon"][:]
@@ -68,29 +63,18 @@ def get_spectr(yr):
         flow = mw_diffu(uwnd[:,zlev,:,:],vwnd[:,zlev,:,:],lon,lat)
 
     #    diffu_grid[zlev,:,:] =np.mean(flow.get_diffu_grid(tLag),2)
-        #diffu_grid[zlev,:,:] =flow.get_diffu_grid3(tLag,lonWidth)
-        diffu_grid[zlev,:,:] =flow.get_diffu_auto_wt(tLag,lonWidth,tSigma)
+        diffu_grid[zlev,:,:] =flow.get_diffu_grid3(tLag,lonWidth)
+    #    diffu_grid[zlev,:,:] =flow.get_diffu_auto_wt(tLag,lonWidth,tSigma)
         u_mn[:,:,zlev]=flow.um.T
 
     #return lon,lat,lev,np.sum(diffu_spectr,3),u_mn
     return lon,lat,lev,diffu_grid,u_mn
 
-#===== main program =====
+
+#===== MAIN PROGRAM =====
     
-#data_fname='/home/cjliu/data/npz/DiffuAutoWt350K_DJF_lonW'+str(int(lonWidth))+'_tSig'+str(tSigma)+'_'+str(yr_st)+'_'+str(yr_end)+'.npz'
 data_fname='/home/cjliu/data/npz/DiffuAuto350K_DJF_'+str(int(lonWidth))+'_'+str(yr_st)+'_'+str(yr_end)+'.npz'
 if PROCESS_FLAG:
-#    yr_num=0
-#    for yr in range(yr_st,yr_end+1):
-#        if yr_num==0:
-#            lon,lat,lev,diffu_spectr,u_mn=get_spectr(yr)
-#        else:
-#            lon,lat,lev,tmp1,tmp2=get_spectr(yr_st)
-#            diffu_spectr+=tmp1
-#            u_mn+=tmp2
-#        yr_num+=1
-#    diffu_spectr/=yr_num
-#    u_mn/=yr_num
     pool=mp.Pool(processes=npro)
     #results=[pool.apply(get_spectr,args=(yr,)) for yr in range(yr_st,yr_end+1)]
     output=[pool.apply_async(get_spectr,args=(yr,)) for yr in range(yr_st,yr_end+1)]
@@ -109,7 +93,6 @@ if PROCESS_FLAG:
             u_mn+=results[i][4]
     diffu_spectr/=ps_num
     u_mn/=ps_num
-        
 
     np.savez(data_fname,lon=lon,lat=lat,lev=lev,diffu_spectr=diffu_spectr,u_mn=u_mn)
 else:
@@ -123,25 +106,12 @@ else:
 nx=lon.shape[0]
 ny=lat.shape[0]
 nt=360
-fig,axes=plt.subplots(2,1,figsize=[6,8])
 
-#=== plot line plot ===
-#axes.plot(lat,np.mean(diffu_spectr[zz,:,:],1))
-
-#=== plot lat lev plot  ===
-#grid_x,grid_y=np.meshgrid(lat,lev)
-#plt_fld=diffu_spectr[:,:,xlev]
-#levs=[0.1,0.2,0.4,0.8,1.6,3.2,6.4,12.8,25.6,51.2]
-#cs=axes.contourf(grid_x,grid_y,np.log(plt_fld)/np.log(10.),cmap=cm.Oranges,levels=np.arange(4,7,0.2))
-#axes.contour(grid_x,grid_y,u_mn[xlev,:,:].T,colors='k')
-#ax=fig.add_axes([0.16,0.05,0.7,0.01])
-#cb0=plt.colorbar(cs,cax=ax,orientation='horizontal')
-#axes.set_title("Zonal mean diffusivity")
-#axes.set_xticks(np.arange(-80,80.1,20.))
 
 #=== plot lon lat plot ===
 zz=3
 plt_fld=diffu_spectr[zz,:,:]
+
 #*** transform longitude ***
 dim=plt_fld.shape
 plt_fld_tmp=np.zeros(dim)
@@ -159,37 +129,38 @@ for i in range(xl,xr):
         lon_tmp[ii]=lon[i]
     ii+=1
 lon=lon_tmp
-#plt_fld=plt_fld_tmp*nx/(np.sqrt(2*np.pi)*mask_sig)
 plt_fld=plt_fld_tmp
 
 u_mn_plt=u_mn_tmp
+#***************************
 
-lon_fld,lat_fld=np.meshgrid(lon,lat)
+## i need lon, lat, plt_fld,
 
+#def plot_local_diffu_NH(lon, lat, plt_fld):
+#    fig,axes=plt.subplots(2,1,figsize=[6,8])
+#    lon_fld,lat_fld=np.meshgrid(lon,lat)
+#
+#    plt_map=Basemap(projection='cyl',llcrnrlon=0,llcrnrlat=-80,urcrnrlon=360,urcrnrlat=80,ax=axes[0],resolution='l')
+#    plt_map.drawcoastlines(linewidth=0.8,color='gray')
+#    grid_x,grid_y=plt_map(lon_fld,lat_fld)
+#
+#    #plt_map.drawparallels(np.arange(-90,90,10),labels=[1,0,0,0],linewidth=0)
+#    #plt_map.drawmeridians(np.arange(0,360,30),labels=[0,0,0,1],linewidth=0)
+#    #plt_map.drawparallels(np.arange(-90,90,10),linewidth=0)
+#
+#    #cs=plt_map.contourf(grid_x,grid_y,plt_fld/1e5,cmap=cm.rainbow,levels=np.arange(-50,350.1,50))
+#    cs=plt_map.contourf(grid_x,grid_y,plt_fld/1e5,cmap=cm.rainbow)
+#    plt_map.contour(grid_x,grid_y,u_mn_plt,colors='k',levels=np.arange(10,60.1,10))
+#    ax=fig.add_axes([0.16,0.05,0.7,0.01])
+#    cb0=plt.colorbar(cs,cax=ax,orientation='horizontal')
+#    axes[0].set_title("350K "+str(yr_st)+'-'+str(yr_end)+' lonWidth='+str(lonWidth))
+#
+#    zm=np.mean(plt_fld,1)
+#    axes[1].plot(lat,zm)
 
-#lon_fld,lat_fld=np.meshgrid
-#axes.contourf(lon_fld,lat_fld,plt_fld)
-plt_map=Basemap(projection='cyl',llcrnrlon=0,llcrnrlat=-80,urcrnrlon=360,urcrnrlat=80,ax=axes[0],resolution='l')
-plt_map.drawcoastlines(linewidth=0.8,color='gray')
-grid_x,grid_y=plt_map(lon_fld,lat_fld)
-#plt_map.drawparallels(np.arange(-90,90,10),labels=[1,0,0,0],linewidth=0)
-#plt_map.drawmeridians(np.arange(0,360,30),labels=[0,0,0,1],linewidth=0)
-#plt_map.drawparallels(np.arange(-90,90,10),linewidth=0)
-#cs=plt_map.contourf(grid_x,grid_y,plt_fld/1e5,cmap=cm.rainbow,levels=np.arange(-50,350.1,50))
-cs=plt_map.contourf(grid_x,grid_y,plt_fld/1e5,cmap=cm.rainbow)
-plt_map.contour(grid_x,grid_y,u_mn_plt,colors='k',levels=np.arange(10,60.1,10))
-#plt_map.contour(grid_x,grid_y,grid_x,colors='k')
-ax=fig.add_axes([0.16,0.05,0.7,0.01])
-cb0=plt.colorbar(cs,cax=ax,orientation='horizontal')
-#axes.set_title("350K "+str(yr_st)+'-'+str(yr_end)+"sig="+str(mask_sig))
-axes[0].set_title("350K "+str(yr_st)+'-'+str(yr_end)+' lonWidth='+str(lonWidth))
-
-zm=np.mean(plt_fld,1)
-axes[1].plot(lat,zm)
-
-
-#plt.savefig("/home/cjliu/Documents/RESEARCH/2017/DIFFUSIVITY/FIGURES/11_2017/diffu_auto_lonW"+str(lonWidth)+"_tSig"+str(tSigma)+'_'+str(yr_st)+"_"+str(yr_end)+".pdf",format='pdf')
-plt.savefig("/home/cjliu/Documents/RESEARCH/2017/DIFFUSIVITY/FIGURES/11_2017/diffu_auto_lonW"+str(lonWidth)+"_"+str(yr_st)+"_"+str(yr_end)+".pdf",format='pdf')
+title = "350K " + str(yr_st) + '-' + str(yr_end) + ' lonWidth=' + str(lonWidth)
+plot_local_diffu_NH_col1(lon, lat, plt_fld/1e5, u_mn_plt, title)
+plt.savefig("/home/cjliu/Documents/RESEARCH/2017/DIFFUSIVITY/FIGURES/01_2018/diffu_auto_lonW"+str(lonWidth)+"_"+str(yr_st)+"_"+str(yr_end)+".fullExt.pdf",format='pdf')
 plt.show()
 
 

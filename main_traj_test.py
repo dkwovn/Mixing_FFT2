@@ -206,7 +206,7 @@ axes[0].set_title("350K "+str(yr_st)+'-'+str(yr_end)+' tLag='+str(tLag/4.))
 zm=np.mean(plt_fld,1)/1e5
 axes[1].plot(lat,zm)
 axes[1].set_xlim(-85,85)
-plt.savefig("/home/cjliu/Documents/RESEARCH/2017/DIFFUSIVITY/FIGURES/12_2017/diffu_traj_u_tLag"+str(tLag)+"_int"+str(x_int)+'_'+str(y_int)+'_'+str(yr_st)+"_"+str(yr_end)+".pdf",format='pdf')
+#plt.savefig("/home/cjliu/Documents/RESEARCH/2017/DIFFUSIVITY/FIGURES/12_2017/diffu_traj_u_tLag"+str(tLag)+"_int"+str(x_int)+'_'+str(y_int)+'_'+str(yr_st)+"_"+str(yr_end)+".pdf",format='pdf')
 plt.show()
 
 

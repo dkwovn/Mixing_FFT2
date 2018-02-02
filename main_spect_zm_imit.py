@@ -8,6 +8,7 @@ from matplotlib import cm
 import multiprocessing as mp
 from mpl_toolkits.basemap import Basemap
 from scipy.stats import pearsonr
+from plot_funcs import plot_zm_diffu
 #print 'Multi-wavenumber theory for diffusivity\n'
 
 
@@ -176,89 +177,28 @@ def linTrend_diff(var):
                 result1[j,k] = np.nan
                 result2[j,k] = np.nan
     return result1,result2
-#=== shapes of variables ===
-# diffu_sectr[nt,nz,ny,nx]
-# u_mn[nt,nx,ny,nz]
-# rh_fld[nt,nz,ny,nc]
 
-#fig,axes=plt.subplots(2,1,figsize=[6,9]) 
-#nx=lon.shape[0]
-#ny=lat.shape[0]
-#nt=360
-##=== plot lat lev plot  ===
-#grid_x,grid_y=np.meshgrid(lat,lev)
-#diffu_trend, diffu_pVal = linTrend(diffu_spectr[:,:,:,xlev])
-#diffu_spectr = np.mean(diffu_spectr[:,:,:,xlev],0)
-#u_st,u_end = linTrend_diff(u_mn[:,xlev,:,:])
-#u_mn = np.mean(u_mn,0)
-#rh_fld_trend, rh_pVal = linTrend(rh_fld[:,zz,:,:])
-#rh_fld = np.mean(rh_fld[:,zz,:,:],0)
-##plt_fld=diffu_spectr[:,:]
-#levs=[0.1,0.2,0.4,0.8,1.6,3.2,6.4,12.8,25.6,51.2]
-##cs=axes[0].contourf(grid_x,grid_y,np.log(plt_fld)/np.log(10.),cmap=cm.Oranges,levels=np.arange(4,7,0.2))
-#cs2=axes[0].contour(grid_x,grid_y,u_mn[xlev,:,:].T,colors='k',levels=[10.,20.,30.,40.])
-#axes[0].contour(grid_x,grid_y,grid_y,colors='k',linestyles='--',levels=(lev[zz],))
-##cs2=axes[0].contour(grid_x,grid_y,u_st[:,:].T,colors='k',levels=[10.,20.,30.,40.])
-##cs2=axes[0].contour(grid_x,grid_y,u_end[:,:].T,colors='r',levels=[10.,20.,30.,40.])
-#cs=axes[0].contourf(grid_x,grid_y,diffu_trend/1e4,cmap=cm.RdBu_r,levels=np.arange(-4,4.01,0.4))
-##cs2=axes[0].contour(grid_x,grid_y,u_mn[xlev,:,:].T,colors='k')
-#ax=fig.add_axes([0.16,0.49,0.7,0.01])
-#cb0=plt.colorbar(cs,cax=ax,orientation='horizontal')
-#axes[0].clabel(cs2,fmt="%.0f")
-#axes[0].set_title("Zonal mean diffusivity")
-#axes[0].set_xticks(np.arange(-80,80.1,20.))
-#axes[0].contourf(grid_x,grid_y,sigLvl-diffu_pVal,levels=[-1e9,0,1e9],hatches=[None,'////'],colors='none')
-#
-##=== plot rh91 plot ===
-#grid_x,grid_y = np.meshgrid(cc,lat)
-#cs3=axes[1].contourf(grid_x,grid_y,rh_fld_trend,cmap=cm.RdBu_r,levels=np.arange(-0.14,0.141,0.02))
-#cs4=axes[1].contour(grid_x,grid_y,rh_fld,colors='grey',levels=np.arange(5,25,5))
-#axes[1].clabel(cs4,fmt="%.0f")
-#axes[1].plot(u_st[:,zz],lat,color='k',linestyle='--')
-#axes[1].plot(u_end[:,zz],lat,color='k',linestyle='-')
-#ax=fig.add_axes([0.16,0.05,0.7,0.01])
-#cb0=plt.colorbar(cs3,cax=ax,orientation='horizontal')
-#axes[1].contourf(grid_x,grid_y,sigLvl-rh_pVal,levels=[-1e9,0,1e9],hatches=[None,'///'],colors='none')
-
-fig = plt.figure(figsize=[6,9])
-fig_ax1 = fig.add_axes([0.1,0.55,0.8,0.4])
-fig_ax2 = fig.add_axes([0.1,0.1,0.8,0.35])
 nx=lon.shape[0]
 ny=lat.shape[0]
 nt=360
-#=== plot lat lev plot  ===
-grid_x,grid_y=np.meshgrid(lat,lev)
-diffu_trend, diffu_pVal = linTrend(diffu_spectr[:,:,:,xlev])
-diffu_spectr = np.mean(diffu_spectr[:,:,:,xlev],0)
-u_st,u_end = linTrend_diff(u_mn[:,xlev,:,:])
-u_mn = np.mean(u_mn,0)
-rh_fld_trend, rh_pVal = linTrend(rh_fld[:,zz,:,:])
-rh_fld = np.mean(rh_fld[:,zz,:,:],0)
-#plt_fld=diffu_spectr[:,:]
-levs=[0.1,0.2,0.4,0.8,1.6,3.2,6.4,12.8,25.6,51.2]
-cs2=fig_ax1.contour(grid_x,grid_y,u_mn[xlev,:,:].T,colors='k',levels=[10.,20.,30.,40.])
-fig_ax1.contour(grid_x,grid_y,grid_y,colors='k',linestyles='--',levels=(lev[zz],))
-cs=fig_ax1.contourf(grid_x,grid_y,diffu_trend/1e4,cmap=cm.RdBu_r,levels=np.arange(-5,5.01,0.5))
-ax=fig.add_axes([0.16,0.49,0.7,0.01])
-cb0=plt.colorbar(cs,cax=ax,orientation='horizontal')
-fig_ax1.clabel(cs2,fmt="%.0f")
-fig_ax1.set_title("Zonal mean diffusivity")
-fig_ax1.set_xticks(np.arange(-80,80.1,20.))
-fig_ax1.contourf(grid_x,grid_y,sigLvl-diffu_pVal,levels=[-1e9,0,1e9],hatches=[None,'////'],colors='none')
-#fig_ax1.invert_yaxis()
 
-#=== plot rh91 plot ===
-grid_x,grid_y = np.meshgrid(cc,lat)
-cs3=fig_ax2.contourf(grid_x,grid_y,rh_fld_trend,cmap=cm.RdBu_r,levels=np.arange(-0.18,0.181,0.02))
-cs4=fig_ax2.contour(grid_x,grid_y,rh_fld,colors='grey',levels=np.arange(5,25,5))
-fig_ax2.clabel(cs4,fmt="%.0f")
-fig_ax2.plot(u_st[:,zz],lat,color='k',linestyle='--')
-fig_ax2.plot(u_end[:,zz],lat,color='k',linestyle='-')
-ax=fig.add_axes([0.16,0.05,0.7,0.01])
-cb0=plt.colorbar(cs3,cax=ax,orientation='horizontal')
-fig_ax2.contourf(grid_x,grid_y,sigLvl-rh_pVal,levels=[-1e9,0,1e9],hatches=[None,'///'],colors='none')
+diffu_spectr = np.mean(diffu_spectr[:, :, :, xlev], 0)
+contour_fld = np.mean(u_mn[:, xlev, :, :], 0).T
+shading_fld = np.log(diffu_spectr)/np.log(10)
+title = "Zonal mean diffusivity"
+plot_zm_diffu(lat, lev, shading_fld, contour_fld, title)
+##=== plot rh91 plot ===
+#grid_x,grid_y = np.meshgrid(cc,lat)
+#cs3=fig_ax2.contourf(grid_x,grid_y,rh_fld_trend,cmap=cm.RdBu_r,levels=np.arange(-0.18,0.181,0.02))
+#cs4=fig_ax2.contour(grid_x,grid_y,rh_fld,colors='grey',levels=np.arange(5,25,5))
+#fig_ax2.clabel(cs4,fmt="%.0f")
+#fig_ax2.plot(u_st[:,zz],lat,color='k',linestyle='--')
+#fig_ax2.plot(u_end[:,zz],lat,color='k',linestyle='-')
+#ax=fig.add_axes([0.16,0.05,0.7,0.01])
+#cb0=plt.colorbar(cs3,cax=ax,orientation='horizontal')
+#fig_ax2.contourf(grid_x,grid_y,sigLvl-rh_pVal,levels=[-1e9,0,1e9],hatches=[None,'///'],colors='none')
 
-#plt.savefig("/home/cjliu/Documents/RESEARCH/2017/DIFFUSIVITY/FIGURES/12_2017/diffu_rh_zm_"+seasonStr+str(lev[zz])+'_'+str(yr_st)+"_"+str(yr_end)+".pdf",format='pdf')
+plt.savefig("/home/cjliu/Documents/RESEARCH/2017/DIFFUSIVITY/FIGURES/01_2018/diffu_zm_imit_"+seasonStr+'_'+str(yr_st)+"_"+str(yr_end)+".pdf",format='pdf')
 plt.show()
 
 
