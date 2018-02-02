@@ -107,3 +107,15 @@ def plot_zm_diffu(lat, lev, shading_fld, contour_fld, title, levs = default_levs
     fig_ax1.set_title(title)
     #fig_ax1.contourf(grid_x,grid_y,sigLvl-diffu_pVal,levels=[-1e9,0,1e9],hatches=[None,'////'],colors='none')
     #fig_ax1.invert_yaxis()
+
+def plot_rh(plt_axe, cbar_axe, cc, lat, shading_fld, u_mn, title):
+    grid_x,grid_y=np.meshgrid(cc,lat)
+    cs=plt_axe.contourf(grid_x,grid_y,shading_fld,cmap=cm.RdBu_r,levels=np.arange(-4,4.1,0.5))
+    #cs=axes[0,0].contourf(grid_x,grid_y,plt_fld,cmap=cm.RdBu_r)
+    plt_axe.plot(u_mn,lat)
+    plt_axe.set_ylim(-80,80)
+    plt_axe.set_xlim(-50,50)
+    #ax1=fig.add_axes([0.13,0.5,0.35,0.01])
+    cb0=plt.colorbar(cs,cax=cbar_axe,extend=0.8,orientation='horizontal')
+    plt_axe.set_title(title)
+
