@@ -182,6 +182,7 @@ class mw_diffu:
         for k in range(self.nx):
             try:
                 f=self.uk2f(c,self.kk[k],j)
+            #    f=self.uk2f_angVel(c,self.kk[k],j)
             except:
                 print( self.kk)
             #extr[k]=np.interp(f,ff,spectr[k,:],left=0,right=0)*(k/(a*np.cos(np.deg2rad(self.lat[j]))))
@@ -295,6 +296,27 @@ class mw_diffu:
 
         return diffu_grid
 
+    #=== use autocorrelation to get diffu with zonal-mean U ===
+    def get_diffu_grid_zmU(self,tLag,dlon):
+        #dlon=half length of lon window
+        xWidth=int(dlon/self.dlon)
+        corr=np.zeros([2*tLag+1,2*xWidth+1])
+        diffu_grid=np.zeros([self.ny,self.nx])
+        nn=self.nt-2*tLag
+        Uzm = np.mean(self.um, 1)
+        for x in range(self.nx):
+        #for x in range(xlev,xlev+1):
+            print('x=',x)
+            for y in range(self.ny):
+        #    for y in range(ylev,ylev+1):
+                ts0=self.va[tLag:self.nt-tLag,y,x]
+                for xx in range(-xWidth,xWidth+1):
+                    corr[:,xx+xWidth]=np.correlate(self.va[:,y,(x+xx)%self.nx],ts0)/nn
+                #corr_U=self.extractU(corr,self.um[y,x],y)
+                corr_U=self.extractU(corr,Uzm[y],y)
+                diffu_grid[y,x]=np.sum(corr_U)*self.deltaT
+
+        return diffu_grid
     #==== get autocorrelation functions centered around a point ====
     def get_autocorr(self, tLag, dlon):
         #dlon=half length of lon window
@@ -564,7 +586,7 @@ class mw_diffu:
         #for y in range(ylev,ylev+1):
             #for x in range(self.nx):
             print( 'y=',y)
-            for x in range(xlev,xlev+1):
+            for x in range(xlev_st,xlev_st+1):
                 #==== calculate local average U ====
                 u_mn[x,y]=self.localU(x,y,mask_func)
                 for t in range(self.nt):
@@ -614,6 +636,9 @@ class mw_diffu:
         f=k*self.T_len/self.L_len[j]*u
         return f
                 
+    def uk2f_angVel(self,u,k,j):
+        f=k*self.T_len/(2*a*np.pi)*u
+        return f
 
     def xt2kw(self,j):
         pass

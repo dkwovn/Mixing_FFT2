@@ -22,7 +22,7 @@ fold_num=16
 zz=3
 ylev=37
 xlev=0
-mask_sig=90.
+mask_sig=120.
 tLag=120
 seasonStr='DJF'
 day_st=237
@@ -194,7 +194,7 @@ u_mn_plt=u_mn_tmp
 
 title = "350K "+str(yr_st)+'-'+str(yr_end)+" sig="+str(mask_sig)
 plot_local_diffu_NH_col1(lon, lat, plt_fld/1e5, u_mn_plt, title)
-plt.savefig("/home/cjliu/Documents/RESEARCH/2017/DIFFUSIVITY/FIGURES/01_2018/diffu_spectr_350K_lonSig"+str(mask_sig)+'_'+str(yr_st)+"_"+str(yr_end)+".pdf",format='pdf')
+#plt.savefig("/home/cjliu/Documents/RESEARCH/2017/DIFFUSIVITY/FIGURES/02_2018/diffu_spectr_350K_lonSig"+str(mask_sig)+'_'+str(yr_st)+"_"+str(yr_end)+".pdf",format='pdf')
 plt.show()
 
 
